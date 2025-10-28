@@ -246,6 +246,97 @@ Hulp nodig?
 2. **Voor VSCode errors** [VSCode Fix](troubleshooting/VSCODE-FIX.md)
 3. **Voor development** [Development Guide](development/DEVELOPMENT.md)
 4. **Voor styling** [Design System](styling/DESIGN-SYSTEM.md)
+## 🔗 Backend Integration
+
+### Backend Repository
+
+Deze frontend communiceert met de **Nieuws Scraper Backend** (Go API):
+- **Backend Repo**: [NieuwsScraper Backend](https://github.com/Jeffreasy/NieuwsScraper)
+- **API Documentatie**: Zie backend repository voor volledige API docs
+- **Default URL**: `http://localhost:8080`
+
+### Backend Scripts Directory
+
+De backend bevat een `scripts/` directory met **administratieve utility scripts**:
+
+> **⚠️ Note voor Frontend Developers**: Deze scripts zijn backend tools die **niet direct** door de frontend gebruikt worden. De frontend communiceert via de REST API endpoints.
+
+#### Go Scripts
+
+Elk Go script staat in zijn eigen subdirectory:
+
+- **list-tables** - Lists database tables en column details
+- **migrate-ai** - Applies AI-related database migrations
+- **test-job-tracking** - Tests scraping job tracking
+
+#### PowerShell Scripts
+
+- `apply-ai-migration.ps1` - Apply AI migrations
+- `apply-content-migration.ps1` - Apply content migrations
+- `create-db.ps1` - Create database
+- `start.ps1` - Start the backend application
+- `test-scraper.ps1` - Scraper testing
+
+### Hoe de Frontend de Backend Gebruikt
+
+1. **Start de Backend API Server**:
+   ```bash
+   # In de backend repository
+   go run cmd/api/main.go
+   # Server draait op http://localhost:8080
+   ```
+
+2. **Frontend API Endpoints**:
+   De frontend maakt HTTP requests naar endpoints zoals:
+   ```typescript
+   // Artikelen ophalen
+   fetch('http://localhost:8080/api/v1/articles?limit=20')
+   
+   // Zoeken
+   fetch('http://localhost:8080/api/v1/articles/search?q=voetbal')
+   
+   // Statistieken
+   fetch('http://localhost:8080/api/v1/articles/stats')
+   
+   // AI Sentiment
+   fetch('http://localhost:8080/api/v1/ai/sentiment/stats')
+   
+   // Trending Topics
+   fetch('http://localhost:8080/api/v1/ai/trending')
+   ```
+
+3. **API Client**:
+   De frontend gebruikt [`lib/api/advanced-client.ts`](../lib/api/advanced-client.ts) voor alle API communicatie met:
+   - Automatic retry logic
+   - Circuit breaker pattern
+   - Request deduplication
+   - Error handling
+
+### Backend Service Architectuur
+
+```
+Frontend (Next.js/React) - Port 3000
+    ↓ HTTP Requests
+Backend API Server (Go) - Port 8080
+    ↓
+├─ Article Handler (/api/v1/articles)
+├─ AI Handler (/api/v1/ai)
+├─ Scraper Handler (/api/v1/scrape) [Protected]
+└─ Health Handler (/health)
+    ↓
+PostgreSQL Database
+Redis Cache (Optional)
+```
+
+### Admin Scripts vs Frontend
+
+De backend scripts zijn **alleen voor backend administratie**:
+- **Database inspectie**: Bekijk tabellen en data
+- **Migraties**: Update database schema
+- **Testing**: Test backend functionaliteit
+
+Deze worden **door developers/admins** uitgevoerd via command line, niet door de frontend applicatie.
+
 
 ---
 
