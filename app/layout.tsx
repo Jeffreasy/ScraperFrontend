@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/components/providers';
 import { Navigation } from '@/components/navigation';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { OfflineIndicator } from '@/components/offline-indicator';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           <ErrorBoundary>
+            <OfflineIndicator />
             <div className="min-h-screen bg-background">
               <Navigation />
               <main className="container mx-auto px-4 py-8">

@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Search, Filter, SortAsc } from 'lucide-react';
-import { apiClient } from '@/lib/api/client';
+import { advancedApiClient } from '@/lib/api/advanced-client';
 import { ArticleFilters, SortBy, SortOrder } from '@/lib/types/api';
+import { STALE_TIMES } from '@/components/providers';
 import { ArticleCard } from '@/components/article-card';
 import { ArticleListSkeleton } from '@/components/article-skeleton';
 import { Pagination } from '@/components/pagination';
@@ -16,9 +18,12 @@ import { ArticleFiltersPanel } from '@/components/article-filters';
 const ITEMS_PER_PAGE = 20;
 
 export default function HomePage() {
+    const searchParams = useSearchParams();
+    const urlSearch = searchParams.get('search') || '';
+
     const [page, setPage] = useState(1);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [searchQuery, setSearchQuery] = useState(urlSearch);
+    const [debouncedSearch, setDebouncedSearch] = useState(urlSearch);
     const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState<ArticleFilters>({
         limit: ITEMS_PER_PAGE,
@@ -26,6 +31,16 @@ export default function HomePage() {
         sort_by: 'published' as SortBy,
         sort_order: 'desc' as SortOrder,
     });
+
+    // Update search when URL parameter changes
+    useEffect(() => {
+        const urlSearch = searchParams.get('search') || '';
+        if (urlSearch && urlSearch !== searchQuery) {
+            setSearchQuery(urlSearch);
+            setDebouncedSearch(urlSearch);
+            setPage(1);
+        }
+    }, [searchParams]);
 
     // Debounced search handler
     const handleSearchChange = debounce((value: string) => {
@@ -43,14 +58,15 @@ export default function HomePage() {
             };
 
             if (debouncedSearch) {
-                return apiClient.searchArticles({
+                return advancedApiClient.searchArticles({
                     q: debouncedSearch,
                     ...currentFilters,
                 });
             }
 
-            return apiClient.getArticles(currentFilters);
+            return advancedApiClient.getArticles(currentFilters);
         },
+        staleTime: STALE_TIMES.articles,
     });
 
     const handlePageChange = (newPage: number) => {

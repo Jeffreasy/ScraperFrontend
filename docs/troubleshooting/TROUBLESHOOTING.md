@@ -31,6 +31,8 @@ Common issues and their solutions for Nieuws Scraper Frontend.
    # Restart VSCode
    ```
 
+> 💡 **Quick Fix:** See [VSCODE-FIX.md](VSCODE-FIX.md) for detailed VSCode troubleshooting
+
 ### "Element implicitly has an 'any' type"
 
 **Symptoms:**
@@ -368,8 +370,8 @@ console.log('Request ID:', response.request_id);
 
 ### Still Need Help?
 
-1. Check [README.md](README.md) for documentation
-2. Review [DEVELOPMENT.md](DEVELOPMENT.md) for best practices
+1. Check [README.md](../../README.md) for documentation
+2. Review [Development Guide](../development/DEVELOPMENT.md) for best practices
 3. Check backend API logs with request ID
 4. Review this troubleshooting guide
 5. Check browser console for detailed errors

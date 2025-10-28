@@ -9,6 +9,7 @@ Een moderne, professioneel gestylde frontend applicatie voor het aggregeren en w
 
 ## ✨ Highlights
 
+- 🤖 **AI-Powered Features** - Sentiment analysis, entity extraction, trending topics
 - 🎨 **Volledig Design System** - Gecentraliseerde styling met tokens en patterns
 - 📱 **100% Responsive** - Mobile-first design voor alle devices
 - ⚡ **Optimale Performance** - Server Components en smart caching
@@ -40,11 +41,24 @@ Open [http://localhost:3000](http://localhost:3000) - klaar! 🎉
 - Smart pagination
 - Responsive grid layout
 
-### 📊 Statistieken Dashboard  
+### 🤖 AI Insights Dashboard (`/ai`)
+- **Sentiment Analysis** - Real-time emotionele toon detectie
+- **Trending Topics** - Ontdek wat trending is met live updates
+- **Entity Extraction** - Automatische detectie van personen, organisaties, locaties
+- **Smart Keywords** - AI-extracted keywords met relevantie scores
+- **Category Classification** - Automatische categorisering met confidence scores
+
+### 📊 Admin Dashboard (`/admin`)
+- **System Health** - Real-time monitoring van alle componenten
+- **Scraper Statistics** - Circuit breakers, content extraction, browser pool
+- **Quick Stats** - Total articles, 24h activity, sources, categories
+- **AI Analytics** - Sentiment distribution en trending topics
+
+### 📈 Statistieken Dashboard (`/stats`)
 - Live article metrics
 - Bron distributie met progress bars
 - Categorie overzicht met iconen
-- System health monitoring
+- Database bereik informatie
 - Auto-refresh functionaliteit
 
 ### 🎨 Design & Styling
@@ -59,97 +73,66 @@ Open [http://localhost:3000](http://localhost:3000) - klaar! 🎉
 ```
 ├── app/                    # Next.js App Router pages
 │   ├── page.tsx           # Home (artikel lijst)
+│   ├── admin/             # Admin dashboard
 │   ├── stats/             # Statistieken dashboard
-│   └── about/             # Over pagina
+│   ├── ai/                # AI insights
+│   └── health/            # System health
 │
 ├── components/            # React componenten
 │   ├── ui/               # Basis UI components (Button, Card, Input)
-│   ├── layout/           # Layout components (Navigation)
-│   └── features/         # Feature components (ArticleCard, Filters)
+│   ├── ai/               # AI-powered components
+│   ├── health/           # Health monitoring components
+│   ├── scraper/          # Scraper statistics components
+│   └── layout/           # Layout components
 │
 ├── lib/                  # Core utilities & config
 │   ├── api/             # API client & error handling
 │   ├── types/           # TypeScript definities
+│   ├── hooks/           # Custom React hooks
 │   ├── styles/          # Theme configuratie & tokens
-│   └── utils.ts         # Helper functies
+│   └── utils/           # Helper functies
 │
-└── docs/                # Complete documentatie
-    ├── getting-started/ # Installatie & setup
-    ├── development/     # Development guides
-    ├── styling/         # Design system & styling
-    ├── components/      # Component documentatie
-    ├── api/             # API integratie
-    ├── troubleshooting/ # Probleemoplossing
-    └── deployment/      # Deployment guides
+└── docs/                # 📚 Complete documentatie
+    ├── getting-started/ # Snelstart & installatie
+    ├── development/     # Development guides & best practices
+    ├── styling/         # Design system & component styling
+    ├── api/             # API integratie & advanced patterns
+    ├── guides/          # Implementation & monitoring guides
+    └── troubleshooting/ # Probleemoplossing & VSCode fixes
 ```
 
 > **Volledige structuur?** Zie [Folderstructuur](docs/development/FOLDER-STRUCTURE.md)
-
-## 🎨 Design System
-
-We hebben een volledig gedocumenteerd design system met:
-
-### Kleuren
-- Primary, Secondary, Muted, Accent, Destructive
-- Nieuwsbron-specifieke kleuren (nu.nl, ad.nl, nos.nl, etc.)
-- Dark mode support
-
-### Typography
-- Inter font family
-- 6 heading levels met presets
-- Body text variants (large, base, small, xs)
-
-### Spacing
-- 4px grid systeem
-- Consistent padding/margin scale
-- Gap utilities voor flex/grid
-
-### Components
-- Pre-styled Button variants (primary, secondary, outline, ghost)
-- Card patterns (base, hover, interactive, elevated)
-- Input styles met focus states
-- Badge variants
-
-> **Volledige documentatie:** [Design System](docs/styling/DESIGN-SYSTEM.md)
-
-## 🧩 Component Library
-
-### UI Components (`components/ui/`)
-Basis building blocks:
-- [`Button`](components/ui/button.tsx) - 5 variants, 3 sizes
-- [`Card`](components/ui/card.tsx) - CardHeader, CardContent, CardFooter
-- [`Input`](components/ui/input.tsx) - Met focus states
-- [`Skeleton`](components/ui/skeleton.tsx) - Loading states
-
-### Feature Components
-Business logic components:
-- [`ArticleCard`](components/article-card.tsx) - Professional artikel weergave
-- [`ArticleFilters`](components/article-filters.tsx) - Geavanceerde filtering
-- [`Pagination`](components/pagination.tsx) - Smart page navigatie
-- [`Navigation`](components/navigation.tsx) - Main app navigation
-
-> **Component gids:** [Component Styling](docs/styling/COMPONENT-STYLING.md)
 
 ## 📚 Documentatie
 
 Volledige GitHub-style documentatie in [`docs/`](docs/):
 
-### Voor Developers
-- 📖 [Development Guide](docs/development/DEVELOPMENT.md) - Complete dev gids
-- 🗂️ [Folder Structure](docs/development/FOLDER-STRUCTURE.md) - Project organisatie
-- 📝 [Coding Standards](docs/development/CODING-STANDARDS.md) - Code conventies
+### 🚀 Getting Started
+- ⚡ [Snelstart Gids](docs/getting-started/QUICKSTART.md) - Begin in 5 minuten
+- 📖 [README Overview](docs/README.md) - Documentatie index
 
-### Voor Designers
+### 💻 Development
+- 📝 [Development Guide](docs/development/DEVELOPMENT.md) - Complete dev gids
+- 🗂️ [Folder Structure](docs/development/FOLDER-STRUCTURE.md) - Project organisatie
+- ⚡ [Optimizations](docs/development/OPTIMIZATIONS.md) - Performance optimalisaties
+
+### 🎨 Design & Styling
 - 🎨 [Design System](docs/styling/DESIGN-SYSTEM.md) - Complete tokens & patterns
 - 🖌️ [Component Styling](docs/styling/COMPONENT-STYLING.md) - Styling richtlijnen
-- 📱 [Responsive Design](docs/styling/RESPONSIVE-DESIGN.md) - Mobile-first patterns
 
-### Voor Iedereen
-- ⚡ [Quickstart](docs/getting-started/QUICKSTART.md) - Begin in 5 minuten
-- 🔧 [Troubleshooting](docs/troubleshooting/TROUBLESHOOTING.md) - Probleemoplossing
-- 🚀 [Deployment](docs/deployment/DEPLOYMENT.md) - Production deployment
+### 🔌 API Integration
+- 🤖 [AI Integration](docs/AI_INTEGRATION.md) - AI features guide
+- 📡 [Advanced API](docs/api/ADVANCED-API.md) - Advanced patterns & monitoring
+- 🌐 [Browser Scraping](docs/BROWSER_SCRAPING_INTEGRATION.md) - Hybrid scraping
 
-> **Start hier:** [Documentatie Overzicht](docs/README.md)
+### 📖 Guides
+- 🚀 [Implementation Guide](docs/guides/IMPLEMENTATION_GUIDE.md) - Feature implementation
+- 📊 [Monitoring Guide](docs/guides/MONITORING_GUIDE.md) - Dashboard & metrics
+- 📊 [Monitoring Dashboard](docs/MONITORING_DASHBOARD.md) - Dashboard details
+
+### 🔧 Troubleshooting
+- 🐛 [Troubleshooting](docs/troubleshooting/TROUBLESHOOTING.md) - Common issues
+- 💻 [VSCode Fix](docs/troubleshooting/VSCODE-FIX.md) - TypeScript errors
 
 ## 🛠️ Tech Stack
 
@@ -165,9 +148,9 @@ Volledige GitHub-style documentatie in [`docs/`](docs/):
 - **Responsive Design** - Mobile-first breakpoints
 
 ### State & Data
-- **TanStack Query 5** - Server state management
+- **TanStack Query 5** - Server state management met smart caching
+- **Advanced API Client** - Retry logic, circuit breaker, deduplication
 - **Native Fetch API** - HTTP client
-- **Smart Caching** - 60s stale time, auto invalidation
 
 ### Developer Experience
 - **ESLint** - Code linting
@@ -223,7 +206,7 @@ npm run type-check   # TypeScript type checking
 4. **Design System** - Gebruik theme tokens
 5. **Documentation** - Update docs bij wijzigingen
 
-> **Development gids:** [Development.md](docs/development/DEVELOPMENT.md)
+> **Development gids:** [Development Guide](docs/development/DEVELOPMENT.md)
 
 ## 📐 Styling Richtlijnen
 
@@ -253,19 +236,6 @@ import { cardStyles, headings, spacing } from '@/lib/styles/theme';
   lg:grid-cols-3             // Desktop: 3 columns
   gap-4                      // Consistent spacing
 ">
-```
-
-### Component Variants
-
-```tsx
-import { cn } from '@/lib/utils';
-
-<button className={cn(
-  'base-classes',
-  variant === 'primary' && 'primary-classes',
-  variant === 'secondary' && 'secondary-classes',
-  className // Allow override
-)}>
 ```
 
 > **Styling gids:** [Component Styling](docs/styling/COMPONENT-STYLING.md)
@@ -299,8 +269,6 @@ Zorg voor juiste environment variables in production:
 NEXT_PUBLIC_API_URL=https://api.jouwdomain.com
 ```
 
-> **Deployment gids:** [Deployment.md](docs/deployment/DEPLOYMENT.md)
-
 ## 🐛 Troubleshooting
 
 ### TypeScript Errors in VSCode?
@@ -328,37 +296,24 @@ npm run build
 Route (app)              Size     First Load JS
 ┌ ○ /                   11 kB    116 kB
 ├ ○ /about             138 B     87.4 kB
+├ ○ /admin             8.2 kB    112 kB
+├ ○ /ai                6.1 kB    105 kB
+├ ○ /health            5.4 kB    103 kB
 └ ○ /stats             3.5 kB    99.7 kB
 ```
 
 ### Optimalisaties
 
 ✅ Server Components (default)  
-✅ Smart caching (60s stale time)  
+✅ Smart caching (5-60s stale time)  
 ✅ Image optimization  
 ✅ Code splitting  
 ✅ CSS purging  
-✅ Bundle analysis ready  
+✅ Request deduplication  
+✅ Circuit breaker pattern  
+✅ Exponential backoff retry  
 
-## 🤝 Contributing
-
-Bijdragen zijn welkom! Volg deze stappen:
-
-1. Fork het project
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
-5. Open Pull Request
-
-### Coding Standards
-
-- TypeScript strict mode
-- Tailwind utility classes
-- Mobile-first responsive
-- Component documentation
-- Design system compliance
-
-> **Contributing gids:** [CONTRIBUTING.md](CONTRIBUTING.md)
+> **Meer info:** [Optimizations Guide](docs/development/OPTIMIZATIONS.md)
 
 ## 📄 Licentie
 
@@ -377,7 +332,6 @@ Dit project is gelicenseerd onder de MIT License - zie [LICENSE](LICENSE) voor d
 - 📚 **Documentatie:** [docs/](docs/)
 - 🐛 **Issues:** GitHub Issues
 - 💬 **Discussions:** GitHub Discussions
-- 📧 **Email:** [contact info]
 
 ---
 
@@ -385,6 +339,6 @@ Dit project is gelicenseerd onder de MIT License - zie [LICENSE](LICENSE) voor d
 
 **Gemaakt met ❤️ voor Nederlands nieuws**
 
-[Documentatie](docs/) · [Design System](docs/styling/DESIGN-SYSTEM.md) · [Contributing](CONTRIBUTING.md)
+[Documentatie](docs/) · [Design System](docs/styling/DESIGN-SYSTEM.md) · [API Guide](docs/api/ADVANCED-API.md)
 
 </div>

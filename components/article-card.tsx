@@ -1,15 +1,22 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink, Calendar, User } from 'lucide-react';
+import { ExternalLink, Calendar, User, FileText } from 'lucide-react';
 import { Article } from '@/lib/types/api';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { formatRelativeTime, getSourceColor, truncateText } from '@/lib/utils';
+import { ContentScrapingModal } from '@/components/content-scraping-modal';
 
 interface ArticleCardProps {
   article: Article;
 }
 
 export function ArticleCard({ article }: ArticleCardProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       {article.image_url && (
@@ -43,7 +50,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
             </span>
           )}
         </div>
-        
+
         <h3 className="text-xl font-semibold leading-tight line-clamp-2">
           {article.title}
         </h3>
@@ -87,16 +94,57 @@ export function ArticleCard({ article }: ArticleCardProps) {
           )}
         </div>
 
-        <Link
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-        >
-          Lees meer
-          <ExternalLink className="h-3 w-3" />
-        </Link>
+        <div className="flex items-center gap-2">
+          {article.content_extracted ? (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setModalOpen(true)}
+                className="h-7 px-2 text-xs border-green-500/50 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/30"
+              >
+                <FileText className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline">Content ✓</span>
+                <span className="sm:hidden">✓</span>
+              </Button>
+              {article.content && article.content.length > 2000 && (
+                <span
+                  className="hidden md:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
+                  title="Waarschijnlijk via browser scraping (JavaScript content)"
+                >
+                  🌐
+                </span>
+              )}
+            </>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setModalOpen(true)}
+              className="h-7 px-2 text-xs"
+            >
+              <FileText className="h-3 w-3 mr-1" />
+              Scrape
+            </Button>
+          )}
+
+          <Link
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            Lees meer
+            <ExternalLink className="h-3 w-3" />
+          </Link>
+        </div>
       </CardFooter>
+
+      <ContentScrapingModal
+        article={article}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
     </Card>
   );
 }

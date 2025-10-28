@@ -127,8 +127,8 @@ npm install
 
 ## Next Steps
 
-1. Read [README.md](README.md) for full documentation
-2. Check [DEVELOPMENT.md](DEVELOPMENT.md) for development guide
+1. Read [Development Guide](../development/DEVELOPMENT.md) for full documentation
+2. Check [Troubleshooting Guide](../troubleshooting/TROUBLESHOOTING.md) for common issues
 3. Review API documentation in backend project
 4. Customize theme in `app/globals.css`
 5. Add your own features!
@@ -138,7 +138,7 @@ npm install
 - Check console for errors
 - Review API response `request_id` for debugging
 - Check backend logs with request ID
-- Refer to [DEVELOPMENT.md](DEVELOPMENT.md)
+- Refer to [docs/](../)
 
 ---
 

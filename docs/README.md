@@ -1,135 +1,258 @@
-# Documentatie - Nieuws Scraper Frontend
+# Nieuws Scraper Frontend Documentation
 
-Welkom bij de complete documentatie voor het Nieuws Scraper Frontend project.
+Complete documentatie voor ontwikkelaars, designers en gebruikers.
 
-## 📚 Documentatie Overzicht
+## 📚 Documentatie Structuur
 
-### Getting Started
-- [**Snelstart Gids**](getting-started/QUICKSTART.md) - Begin in 5 minuten
-- [**Installatie**](getting-started/INSTALLATION.md) - Gedetailleerde installatie instructies
-- [**Configuratie**](getting-started/CONFIGURATION.md) - Environment setup en configuratie
+### 🚀 Getting Started
 
-### Development
-- [**Development Guide**](development/DEVELOPMENT.md) - Complete ontwikkelaars gids
-- [**Folderstructuur**](development/FOLDER-STRUCTURE.md) - Project organisatie
-- [**Coding Standards**](development/CODING-STANDARDS.md) - Code conventies en best practices
+Begin hier als je nieuw bent:
 
-### Styling & Design
-- [**Design System**](styling/DESIGN-SYSTEM.md) - Complete design system documentatie
-- [**Tailwind Configuratie**](styling/TAILWIND-CONFIG.md) - Tailwind setup en customization
-- [**Component Styling**](styling/COMPONENT-STYLING.md) - Component styling richtlijnen
-- [**Responsive Design**](styling/RESPONSIVE-DESIGN.md) - Breakpoints en responsive patterns
+- **[Snelstart Gids](getting-started/QUICKSTART.md)** - Setup in 5 minuten
+  - Installation & setup
+  - Eerste stappen
+  - Belangrijke features
+  - Environment variables
+  - Troubleshooting basics
 
-### Components
-- [**UI Components**](components/UI-COMPONENTS.md) - Basis UI component library
-- [**Layout Components**](components/LAYOUT-COMPONENTS.md) - Layout en structuur componenten
-- [**Feature Components**](components/FEATURE-COMPONENTS.md) - Feature-specifieke componenten
+### 💻 Development
 
-### API Integration
-- [**API Client**](api/API-CLIENT.md) - API client documentatie
-- [**API Types**](api/API-TYPES.md) - TypeScript type definities
-- [**Error Handling**](api/ERROR-HANDLING.md) - Foutafhandeling strategie
+Voor developers die aan het project werken:
 
-### Troubleshooting
-- [**Troubleshooting Guide**](troubleshooting/TROUBLESHOOTING.md) - Probleem oplossingen
-- [**VSCode Setup**](troubleshooting/VSCODE-SETUP.md) - VSCode configuratie en fixes
-- [**Common Issues**](troubleshooting/COMMON-ISSUES.md) - Veelvoorkomende problemen
+- **[Development Guide](development/DEVELOPMENT.md)** - Complete development gids
+  - Setup & IDE configuratie
+  - Architecture & patterns
+  - Component guidelines
+  - API integration
+  - State management
+  - Best practices
 
-### Deployment
-- [**Production Build**](deployment/PRODUCTION.md) - Production build en optimalisatie
-- [**Deployment Guide**](deployment/DEPLOYMENT.md) - Deployment strategieën
-- [**Environment Variables**](deployment/ENVIRONMENT.md) - Environment configuratie
+- **[Folder Structure](development/FOLDER-STRUCTURE.md)** - Project organisatie
+  - Directory overzicht
+  - File naming conventions
+  - Module organisatie
 
-## 🎯 Snel Navigatie
+- **[Optimizations](development/OPTIMIZATIONS.md)** - Performance optimalisaties
+  - Smart caching strategies
+  - Request deduplication
+  - Circuit breaker pattern
+  - Adaptive polling
+  - Prefetch strategies
 
-### Voor Nieuwe Ontwikkelaars
-1. Start met [Snelstart Gids](getting-started/QUICKSTART.md)
-2. Lees de [Development Guide](development/DEVELOPMENT.md)
-3. Bekijk het [Design System](styling/DESIGN-SYSTEM.md)
-4. Verken de [Folderstructuur](development/FOLDER-STRUCTURE.md)
+### 🎨 Design & Styling
 
-### Voor Designers
-1. [Design System](styling/DESIGN-SYSTEM.md) - Complete design tokens
-2. [Component Styling](styling/COMPONENT-STYLING.md) - Styling patterns
-3. [Responsive Design](styling/RESPONSIVE-DESIGN.md) - Responsive strategie
+Voor developers en designers:
 
-### Voor DevOps
-1. [Production Build](deployment/PRODUCTION.md)
-2. [Deployment Guide](deployment/DEPLOYMENT.md)
-3. [Environment Variables](deployment/ENVIRONMENT.md)
+- **[Design System](styling/DESIGN-SYSTEM.md)** - Complete design tokens
+  - Kleuren & theming
+  - Typography systeem
+  - Spacing & layout
+  - Component variants
+  - Dark mode support
 
-## 📖 Documentatie Structuur
+- **[Component Styling](styling/COMPONENT-STYLING.md)** - Styling richtlijnen
+  - Tailwind best practices
+  - Responsive patterns
+  - Component patterns
+  - Accessibility guidelines
+
+### 🔌 API Integration
+
+Voor API integratie en advanced patterns:
+
+- **[AI Integration](AI_INTEGRATION.md)** - AI features guide
+  - Sentiment analysis
+  - Entity extraction
+  - Trending topics
+  - Keyword analysis
+  - Chat interface
+
+- **[Advanced API](api/ADVANCED-API.md)** - Advanced patterns
+  - Health monitoring
+  - Circuit breakers
+  - Request deduplication
+  - Error recovery
+  - Performance optimization
+
+- **[Browser Scraping](BROWSER_SCRAPING_INTEGRATION.md)** - Hybrid scraping
+  - Content extraction
+  - Browser pool
+  - HTML parsing
+  - Error handling
+
+### 📖 Implementation Guides
+
+Stap-voor-stap implementatie guides:
+
+- **[Implementation Guide](guides/IMPLEMENTATION_GUIDE.md)** - Feature implementation
+  - Advanced API client setup
+  - Health monitoring hooks
+  - Adaptive polling
+  - Offline detection
+  - WebSocket client
+
+- **[Monitoring Guide](guides/MONITORING_GUIDE.md)** - Dashboard & metrics
+  - Admin dashboard
+  - Health monitoring
+  - Scraper statistics
+  - AI analytics
+  - Real-time updates
+
+- **[Monitoring Dashboard](MONITORING_DASHBOARD.md)** - Complete dashboard details
+  - Dashboard overzichten
+  - Component usage
+  - API endpoints
+  - Auto-refresh config
+
+### 🔧 Troubleshooting
+
+Als je problemen tegenkomt:
+
+- **[Troubleshooting Guide](troubleshooting/TROUBLESHOOTING.md)** - Common issues
+  - TypeScript errors
+  - Build issues
+  - API connection
+  - Runtime errors
+  - Performance problems
+
+- **[VSCode Fix](troubleshooting/VSCODE-FIX.md)** - TypeScript errors in VSCode
+  - Quick fixes (30 seconden)
+  - Cache issues
+  - Path alias problems
+
+## 🎯 Quick Navigation
+
+### Ik wil...
+
+**...snel beginnen**
+→ [Snelstart Gids](getting-started/QUICKSTART.md)
+
+**...de app ontwikkelen**
+→ [Development Guide](development/DEVELOPMENT.md)
+
+**...componenten stylen**
+→ [Component Styling](styling/COMPONENT-STYLING.md)
+
+**...API integreren**
+→ [Advanced API](api/ADVANCED-API.md)
+
+**...AI features toevoegen**
+→ [AI Integration](AI_INTEGRATION.md)
+
+**...monitoring implementeren**
+→ [Monitoring Guide](guides/MONITORING_GUIDE.md)
+
+**...problemen oplossen**
+→ [Troubleshooting](troubleshooting/TROUBLESHOOTING.md)
+
+**...performance optimaliseren**
+→ [Optimizations](development/OPTIMIZATIONS.md)
+
+## 📁 Documentatie Overzicht
 
 ```
 docs/
-├── README.md                    # Dit bestand
+├── README.md (deze file)              # Documentatie index
 │
-├── getting-started/            # Installatie en setup
-│   ├── QUICKSTART.md
-│   ├── INSTALLATION.md
-│   └── CONFIGURATION.md
+├── getting-started/                   # 🚀 Start hier!
+│   └── QUICKSTART.md                  # 5-minuten setup guide
 │
-├── development/                # Development guides
-│   ├── DEVELOPMENT.md
-│   ├── FOLDER-STRUCTURE.md
-│   └── CODING-STANDARDS.md
+├── development/                       # 💻 Development
+│   ├── DEVELOPMENT.md                 # Complete dev gids
+│   ├── FOLDER-STRUCTURE.md            # Project structuur
+│   └── OPTIMIZATIONS.md               # Performance tips
 │
-├── styling/                    # Design en styling
-│   ├── DESIGN-SYSTEM.md
-│   ├── TAILWIND-CONFIG.md
-│   ├── COMPONENT-STYLING.md
-│   └── RESPONSIVE-DESIGN.md
+├── styling/                           # 🎨 Design & Styling
+│   ├── DESIGN-SYSTEM.md               # Design tokens & patterns
+│   └── COMPONENT-STYLING.md           # Component styling guide
 │
-├── components/                 # Component documentatie
-│   ├── UI-COMPONENTS.md
-│   ├── LAYOUT-COMPONENTS.md
-│   └── FEATURE-COMPONENTS.md
+├── api/                               # 🔌 API Integration
+│   └── ADVANCED-API.md                # Advanced patterns & monitoring
 │
-├── api/                        # API documentatie
-│   ├── API-CLIENT.md
-│   ├── API-TYPES.md
-│   └── ERROR-HANDLING.md
+├── guides/                            # 📖 Implementation Guides
+│   ├── IMPLEMENTATION_GUIDE.md        # Feature implementation
+│   └── MONITORING_GUIDE.md            # Monitoring & dashboards
 │
-├── troubleshooting/           # Probleemoplossing
-│   ├── TROUBLESHOOTING.md
-│   ├── VSCODE-SETUP.md
-│   └── COMMON-ISSUES.md
+├── troubleshooting/                   # 🔧 Help & Support
+│   ├── TROUBLESHOOTING.md             # Common issues
+│   └── VSCODE-FIX.md                  # VSCode TypeScript fixes
 │
-└── deployment/                # Deployment
-    ├── PRODUCTION.md
-    ├── DEPLOYMENT.md
-    └── ENVIRONMENT.md
+└── [Feature Docs]                     # Specifieke features
+    ├── AI_INTEGRATION.md              # AI features
+    ├── BROWSER_SCRAPING_INTEGRATION.md # Hybrid scraping
+    └── MONITORING_DASHBOARD.md        # Dashboard details
 ```
 
-## 🔍 Zoeken in Documentatie
+## 🎓 Learning Path
 
-- **Ctrl+F** of **Cmd+F** om te zoeken binnen een document
-- Gebruik GitHub's search functie om te zoeken in alle bestanden
-- Check de inhoudsopgave in elk document voor snelle navigatie
+### Beginner
 
-## 🤝 Bijdragen aan Documentatie
+1. Start met [Snelstart Gids](getting-started/QUICKSTART.md)
+2. Bekijk [Folder Structure](development/FOLDER-STRUCTURE.md)
+3. Lees [Design System](styling/DESIGN-SYSTEM.md) basics
 
-Zie [CONTRIBUTING.md](../CONTRIBUTING.md) voor richtlijnen over het bijdragen aan de documentatie.
+### Intermediate
 
-## 📝 Documentatie Conventie
+4. Bestudeer [Development Guide](development/DEVELOPMENT.md)
+5. Implementeer features met [Implementation Guide](guides/IMPLEMENTATION_GUIDE.md)
+6. Leer over [API Integration](api/ADVANCED-API.md)
 
-- Alle documentatie is in **Nederlands**
-- Code voorbeelden zijn in **Engels** (standard practice)
-- Gebruik **Markdown** voor alle documentatie
-- Gebruik **code blocks** met syntax highlighting
-- Voeg altijd **inhoudsopgave** toe voor lange documenten
-- Gebruik **emoji** voor visuele markers (✅ ❌ ⚠️ 📝 etc.)
+### Advanced
 
-## 🔄 Document Versies
+7. Optimaliseer met [Optimizations](development/OPTIMIZATIONS.md)
+8. Implementeer [Monitoring](guides/MONITORING_GUIDE.md)
+9. Voeg [AI Features](AI_INTEGRATION.md) toe
 
-Alle documentatie wordt up-to-date gehouden met elke release. Check de datum onderaan elk document voor de laatste update.
+## 🔍 Zoek in Documentatie
 
-## 💬 Feedback
+| Onderwerp | Documentatie |
+|-----------|--------------|
+| **Setup & Installation** | [Quickstart](getting-started/QUICKSTART.md) |
+| **Component Development** | [Development Guide](development/DEVELOPMENT.md) |
+| **Styling & Design** | [Design System](styling/DESIGN-SYSTEM.md), [Component Styling](styling/COMPONENT-STYLING.md) |
+| **API Calls** | [Advanced API](api/ADVANCED-API.md) |
+| **State Management** | [Development Guide](development/DEVELOPMENT.md#state-management) |
+| **Performance** | [Optimizations](development/OPTIMIZATIONS.md) |
+| **AI Features** | [AI Integration](AI_INTEGRATION.md) |
+| **Monitoring** | [Monitoring Guide](guides/MONITORING_GUIDE.md) |
+| **Error Fixing** | [Troubleshooting](troubleshooting/TROUBLESHOOTING.md) |
+| **VSCode Issues** | [VSCode Fix](troubleshooting/VSCODE-FIX.md) |
 
-Heb je vragen of suggesties over de documentatie? Open een issue op GitHub of neem contact op met het team.
+## 📝 Documentation Standards
+
+Alle documentatie volgt deze standaarden:
+
+- ✅ GitHub-style markdown formatting
+- ✅ Clear section headers met emojis
+- ✅ Code examples met syntax highlighting
+- ✅ Links naar gerelateerde docs
+- ✅ Table of contents voor lange docs
+- ✅ Practical examples en use cases
+
+## 🔄 Documentatie Updates
+
+Bij het toevoegen van features:
+
+1. Update relevante documentatie
+2. Voeg code voorbeelden toe
+3. Link naar gerelateerde docs
+4. Update deze README indien nodig
+
+## 🆘 Support
+
+Hulp nodig?
+
+1. **Start met** [Troubleshooting](troubleshooting/TROUBLESHOOTING.md)
+2. **Voor VSCode errors** [VSCode Fix](troubleshooting/VSCODE-FIX.md)
+3. **Voor development** [Development Guide](development/DEVELOPMENT.md)
+4. **Voor styling** [Design System](styling/DESIGN-SYSTEM.md)
 
 ---
 
-**Laatste Update:** 2024-10-28  
-**Versie:** 1.0.0  
-**Maintainers:** Frontend Team
+<div align="center">
+
+**📚 Complete, professionele documentatie voor een production-ready frontend**
+
+[Terug naar Project README](../README.md)
+
+</div>
