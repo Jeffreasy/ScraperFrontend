@@ -13,6 +13,8 @@ import { KeywordTag } from './ai/keyword-tag';
 import { Button } from './ui/button';
 import { useState } from 'react';
 import { Skeleton } from './ui/skeleton';
+import { ArticleStockTickers } from './stock';
+import { useArticleStockTickers } from '@/lib/hooks/use-article-stock-tickers';
 
 interface ArticleCardEnhancedProps {
     article: Article;
@@ -23,6 +25,7 @@ interface ArticleCardEnhancedProps {
 export function ArticleCardEnhanced({ article, showAI = true, onEntityClick }: ArticleCardEnhancedProps) {
     const [aiExpanded, setAiExpanded] = useState(false);
     const { data: ai, isLoading: aiLoading } = useArticleAI(article.id, showAI && aiExpanded);
+    const { tickers, hasTickers } = useArticleStockTickers(article);
 
     return (
         <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -72,6 +75,13 @@ export function ArticleCardEnhanced({ article, showAI = true, onEntityClick }: A
                 <p className="text-sm text-muted-foreground line-clamp-3">
                     {ai?.summary || article.summary}
                 </p>
+
+                {/* Stock Tickers */}
+                {hasTickers && (
+                    <div className="mt-3 pt-3 border-t">
+                        <ArticleStockTickers tickers={tickers} />
+                    </div>
+                )}
 
                 {/* AI Categories */}
                 {ai?.categories && Object.keys(ai.categories).length > 0 && (

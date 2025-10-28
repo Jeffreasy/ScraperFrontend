@@ -19,6 +19,8 @@ import type {
     ProcessorStats,
     ChatRequest,
     ChatResponse,
+    StockQuote,
+    StockProfile,
 } from '@/lib/types/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -492,6 +494,65 @@ class AdvancedAPIClient {
             body: JSON.stringify(request),
             skipDedup: true, // Don't deduplicate chat messages
         });
+    }
+
+    // ============================================
+    // Stock API
+    // ============================================
+
+    async getStockQuote(symbol: string): Promise<APIResponse<StockQuote>> {
+        const response = await this.getWithDedup<StockQuote>(`/api/v1/stocks/quote/${symbol}`);
+
+        // Handle unwrapped response from backend
+        if (response && 'symbol' in response && !('success' in response)) {
+            return {
+                success: true,
+                data: response as any as StockQuote,
+                request_id: `stock-${Date.now()}`,
+                timestamp: new Date().toISOString()
+            } as APIResponse<StockQuote>;
+        }
+
+        return response;
+    }
+
+    async getMultipleQuotes(symbols: string[]): Promise<APIResponse<Record<string, StockQuote>>> {
+        const response = await this.fetchWithErrorHandling<Record<string, StockQuote>>('/api/v1/stocks/quotes', {
+            method: 'POST',
+            body: JSON.stringify({ symbols }),
+        });
+
+        // Handle unwrapped response from backend
+        if (response && typeof response === 'object' && !('success' in response)) {
+            return {
+                success: true,
+                data: response as any as Record<string, StockQuote>,
+                request_id: `stocks-${Date.now()}`,
+                timestamp: new Date().toISOString()
+            } as APIResponse<Record<string, StockQuote>>;
+        }
+
+        return response;
+    }
+
+    async getStockProfile(symbol: string): Promise<APIResponse<StockProfile>> {
+        const response = await this.getWithDedup<StockProfile>(`/api/v1/stocks/profile/${symbol}`);
+
+        // Handle unwrapped response from backend
+        if (response && 'symbol' in response && !('success' in response)) {
+            return {
+                success: true,
+                data: response as any as StockProfile,
+                request_id: `profile-${Date.now()}`,
+                timestamp: new Date().toISOString()
+            } as APIResponse<StockProfile>;
+        }
+
+        return response;
+    }
+
+    async getArticlesByTicker(symbol: string, limit: number = 10): Promise<APIResponse<Article[]>> {
+        return this.getWithDedup<Article[]>(`/api/v1/articles/by-ticker/${symbol}`, { limit });
     }
 
     // ============================================

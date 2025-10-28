@@ -63,6 +63,8 @@ export interface Article {
   category: string;
   created_at: string;
   updated_at: string;
+  ai_enrichment?: AIEnrichment;
+  stock_data?: Record<string, StockQuote>;
 }
 
 export interface ArticleListResponse extends APIResponse<Article[]> { }
@@ -220,6 +222,220 @@ export enum ErrorCode {
   SCRAPING_FAILED = 'SCRAPING_FAILED',
 }
 
+// Stock Ticker Types
+
+export interface StockTicker {
+  symbol: string;        // "ASML", "AAPL", etc.
+  name?: string;         // "ASML Holding"
+  exchange?: string;     // "AEX", "NASDAQ"
+  mentions?: number;     // Times mentioned in article
+  context?: string;      // Context snippet
+}
+
+export interface StockQuote {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  change_percent: number;
+  volume: number;
+  market_cap?: number;
+  exchange: string;
+  currency: string;
+  last_updated: string;
+  previous_close?: number;
+  day_high?: number;
+  day_low?: number;
+  year_high?: number;
+  year_low?: number;
+  price_avg_50?: number;
+  price_avg_200?: number;
+  eps?: number;
+  pe?: number;
+  shares_outstanding?: number;
+}
+
+// Historical Price Data
+export interface HistoricalPrice {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  adjClose: number;
+  volume: number;
+  change: number;
+  changePercent: number;
+}
+
+export interface HistoricalDataResponse {
+  symbol: string;
+  from: string;
+  to: string;
+  dataPoints: number;
+  prices: HistoricalPrice[];
+}
+
+// Financial Metrics
+export interface FinancialMetrics {
+  symbol: string;
+  marketCap: number;
+  peRatio: number;
+  pegRatio?: number;
+  priceToBook?: number;
+  priceToSales?: number;
+  roe?: number;  // Return on Equity
+  roa?: number;  // Return on Assets
+  debtToEquity?: number;
+  currentRatio?: number;
+  dividendYield?: number;
+  eps: number;
+  revenuePerShare?: number;
+  freeCashFlowYield?: number;
+}
+
+// Stock News
+export interface StockNewsItem {
+  symbol: string;
+  publishedDate: string;
+  title: string;
+  image?: string;
+  site: string;
+  text: string;
+  url: string;
+}
+
+export interface StockNewsResponse {
+  symbol: string;
+  total: number;
+  news: StockNewsItem[];
+}
+
+// Earnings Calendar
+export interface EarningsEvent {
+  symbol: string;
+  date: string;
+  eps: number;
+  epsEstimated: number;
+  time: 'bmo' | 'amc' | 'tbd';  // before market open, after market close, to be determined
+  revenue: number;
+  revenueEstimated: number;
+}
+
+export interface EarningsCalendarResponse {
+  from: string;
+  to: string;
+  total: number;
+  earnings: EarningsEvent[];
+}
+
+// Symbol Search
+export interface SymbolSearchResult {
+  symbol: string;
+  company_name: string;
+  currency: string;
+  exchange: string;
+  exchangeShortName?: string;
+  stockExchange?: string;
+}
+
+export interface SymbolSearchResponse {
+  query: string;
+  total: number;
+  results: SymbolSearchResult[];
+}
+
+// Batch Quotes Response with Meta
+export interface BatchQuotesResponse {
+  quotes: Record<string, StockQuote>;
+  meta: {
+    total: number;
+    requested: number;
+    duration_ms: number;
+    using_batch: boolean;
+    cost_saving?: string;
+  };
+}
+
+// Market Performance Types
+export interface MarketMover {
+  symbol: string;
+  name: string;
+  change: number;
+  changePercent: number;
+  price: number;
+  volume: number;
+}
+
+export interface MarketMoversResponse {
+  gainers?: MarketMover[];
+  losers?: MarketMover[];
+  actives?: MarketMover[];
+  total: number;
+}
+
+export interface SectorPerformance {
+  sector: string;
+  changePercent: number;
+}
+
+export interface SectorsResponse {
+  sectors: SectorPerformance[];
+  total: number;
+}
+
+// Analyst Ratings Types
+export interface AnalystRating {
+  date: string;
+  analystName?: string;
+  analystCompany?: string;
+  gradeNew: string;
+  gradePrevious?: string;
+  action: string;
+  priceTarget?: number;
+  priceWhenPosted?: number;
+}
+
+export interface AnalystRatingsResponse {
+  symbol: string;
+  ratings: AnalystRating[];
+  total: number;
+}
+
+export interface PriceTarget {
+  symbol: string;
+  targetConsensus?: number;
+  targetHigh?: number;
+  targetLow?: number;
+  targetMean?: number;
+  targetMedian?: number;
+  numberOfAnalysts?: number;
+}
+
+// Stock Stats
+export interface StockStatsResponse {
+  cache: {
+    enabled: boolean;
+    ttl: string;
+    cached_quotes: number;
+    cached_profiles: number;
+  };
+}
+
+export interface StockProfile {
+  symbol: string;
+  company_name: string;
+  currency: string;
+  exchange: string;
+  industry?: string;
+  sector?: string;
+  website?: string;
+  description?: string;
+  ceo?: string;
+  country?: string;
+  ipo_date?: string;
+}
+
 // AI Enrichment Types
 
 export interface AIEnrichment {
@@ -243,6 +459,7 @@ export interface EntityExtraction {
   persons?: string[];
   organizations?: string[];
   locations?: string[];
+  stock_tickers?: StockTicker[];
 }
 
 export interface Keyword {

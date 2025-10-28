@@ -9,6 +9,8 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { formatRelativeTime, getSourceColor, truncateText } from '@/lib/utils';
 import { ContentScrapingModal } from '@/components/content-scraping-modal';
+import { ArticleStockTickers } from '@/components/stock';
+import { useArticleStockTickers } from '@/lib/hooks/use-article-stock-tickers';
 
 interface ArticleCardProps {
   article: Article;
@@ -16,6 +18,7 @@ interface ArticleCardProps {
 
 export function ArticleCard({ article }: ArticleCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const { tickers, hasTickers } = useArticleStockTickers(article);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -60,6 +63,13 @@ export function ArticleCard({ article }: ArticleCardProps) {
         <p className="text-sm text-muted-foreground line-clamp-3">
           {article.summary}
         </p>
+
+        {/* Stock Tickers */}
+        {hasTickers && (
+          <div className="mt-3 pt-3 border-t">
+            <ArticleStockTickers tickers={tickers} />
+          </div>
+        )}
 
         {article.keywords && article.keywords.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">

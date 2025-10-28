@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { TrendingTopics } from '@/components/ai/trending-topics';
 import { SentimentDashboard } from '@/components/ai/sentiment-dashboard';
+import { EarningsCalendar } from '@/components/stock';
 
 export const metadata: Metadata = {
     title: 'AI Insights | NieuwsScraper',
@@ -17,7 +18,7 @@ export default function AIPage() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 {/* Trending Topics - Takes 1 column */}
                 <div className="lg:col-span-1">
                     <TrendingTopics hours={24} minArticles={3} />
@@ -26,6 +27,20 @@ export default function AIPage() {
                 {/* Sentiment Dashboard - Takes 2 columns */}
                 <div className="lg:col-span-2">
                     <SentimentDashboard />
+                </div>
+            </div>
+
+            {/* Earnings Calendar Section - Compact sidebar */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                    <h2 className="text-2xl font-bold mb-4">📊 Market Insights</h2>
+                    <p className="text-muted-foreground mb-4">
+                        AI-powered analysis combined with market timing intelligence
+                    </p>
+                    {/* Future: Add more AI insights here */}
+                </div>
+                <div className="lg:col-span-1">
+                    <EarningsCalendar daysAhead={14} limit={8} compact={true} />
                 </div>
             </div>
 

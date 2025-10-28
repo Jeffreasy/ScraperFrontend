@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Newspaper, BarChart3, Info, Sparkles, Activity, Shield } from 'lucide-react';
+import { Newspaper, BarChart3, Info, Sparkles, Activity, Shield, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OfflineIndicatorCompact } from '@/components/offline-indicator';
 import { useHealthStatus } from '@/lib/hooks/use-health';
@@ -13,6 +13,11 @@ const navItems = [
     name: 'Artikelen',
     href: '/',
     icon: Newspaper,
+  },
+  {
+    name: 'Stocks',
+    href: '/stocks',
+    icon: TrendingUp,
   },
   {
     name: 'AI Insights',
@@ -60,7 +65,8 @@ export function Navigation() {
             <div className="flex items-center space-x-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href;
+                const isActive = pathname === item.href ||
+                  (item.href === '/stocks' && pathname.startsWith('/stocks'));
 
                 return (
                   <Link

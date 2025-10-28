@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { debounce } from '@/lib/utils';
 import { ArticleFiltersPanel } from '@/components/article-filters';
+import { EarningsCalendar } from '@/components/stock';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -185,6 +186,13 @@ export default function HomePage() {
                             </button>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Earnings Calendar Widget - Only visible when no filters active */}
+            {!debouncedSearch && !filters.source && !filters.category && !filters.start_date && (
+                <div className="my-8">
+                    <EarningsCalendar daysAhead={7} limit={5} compact={true} />
                 </div>
             )}
 
