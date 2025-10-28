@@ -286,6 +286,82 @@ npm run build
 2. Verify `NEXT_PUBLIC_API_URL` in `.env.local`
 3. Check CORS settings in backend
 
+
+## 🔗 Backend Integration
+
+### Backend Repository
+
+Deze frontend communiceert met de **Nieuws Scraper Backend** (Go API):
+- **Backend Repository**: [NieuwsScraper Backend](https://github.com/Jeffreasy/NieuwsScraper)
+- **API Server**: Draait op `http://localhost:8080`
+- **Technology**: Go (Golang) met PostgreSQL database
+
+### Backend Setup
+
+Om de frontend te gebruiken, moet de backend API draaien:
+
+```bash
+# In de backend repository
+go run cmd/api/main.go
+# Backend API server start op http://localhost:8080
+```
+
+### Backend Scripts Directory
+
+De backend bevat een `scripts/` directory met **administratieve utility scripts**:
+
+> **⚠️ Note**: Deze scripts zijn **backend tools** die niet direct door de frontend gebruikt worden. De frontend communiceert alleen via REST API endpoints.
+
+#### Backend Go Scripts
+
+- **list-tables** - Lists database tables en column details
+- **migrate-ai** - Applies AI-related database migrations  
+- **test-job-tracking** - Tests scraping job tracking
+
+#### Backend PowerShell Scripts
+
+- `apply-ai-migration.ps1` - Apply AI migrations
+- `apply-content-migration.ps1` - Apply content migrations
+- `create-db.ps1` - Create database
+- `start.ps1` - Start the backend application
+- `test-scraper.ps1` - Scraper testing
+
+### Frontend ↔ Backend Communicatie
+
+De frontend gebruikt [`lib/api/advanced-client.ts`](lib/api/advanced-client.ts) om te communiceren met de backend:
+
+```typescript
+// Frontend maakt HTTP requests naar backend endpoints
+GET  http://localhost:8080/api/v1/articles           // Artikelen ophalen
+GET  http://localhost:8080/api/v1/articles/search    // Zoeken
+GET  http://localhost:8080/api/v1/articles/stats     // Statistieken
+GET  http://localhost:8080/api/v1/ai/sentiment/stats // AI Sentiment
+GET  http://localhost:8080/api/v1/ai/trending        // Trending Topics
+POST http://localhost:8080/api/v1/scrape             // Trigger scraping [Protected]
+```
+
+### Architectuur Overzicht
+
+```
+Frontend (Next.js) - Port 3000
+    ↓ HTTP REST API
+Backend (Go) - Port 8080
+    ↓
+├─ Article Handler (/api/v1/articles)
+├─ AI Handler (/api/v1/ai)
+├─ Scraper Handler (/api/v1/scrape)
+├─ Health Handler (/health)
+    ↓
+PostgreSQL Database + Redis Cache
+```
+
+### API Documentatie
+
+Voor volledige API documentatie:
+- **Frontend Integration**: [Advanced API Guide](docs/api/ADVANCED-API.md)
+- **Backend API Docs**: Zie backend repository
+- **Health Monitoring**: [Monitoring Guide](docs/guides/MONITORING_GUIDE.md)
+
 > **Volledige gids:** [Troubleshooting](docs/troubleshooting/TROUBLESHOOTING.md)
 
 ## 📊 Performance
