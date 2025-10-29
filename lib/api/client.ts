@@ -33,6 +33,8 @@ import type {
   AnalystRatingsResponse,
   PriceTarget,
   StockStatsResponse,
+  EmailStats,
+  EmailFetchResponse,
 } from '@/lib/types/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -283,6 +285,17 @@ class APIClient {
     return this.fetchWithErrorHandling<ChatResponse>('/api/v1/ai/chat', {
       method: 'POST',
       body: JSON.stringify(request),
+    });
+  }
+
+  // Email API methods
+  async getEmailStats(): Promise<APIResponse<EmailStats>> {
+    return this.fetchWithErrorHandling<EmailStats>('/api/v1/email/stats');
+  }
+
+  async fetchExistingEmails(): Promise<APIResponse<EmailFetchResponse>> {
+    return this.fetchWithErrorHandling<EmailFetchResponse>('/api/v1/email/fetch-existing', {
+      method: 'POST',
     });
   }
 

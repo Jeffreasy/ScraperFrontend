@@ -1,309 +1,374 @@
 'use client';
 
 import React, { useState } from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
 import {
     StockQuoteCard,
     EarningsCalendar,
 } from '@/components/stock';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Lock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, Lock, Info, CheckCircle } from 'lucide-react';
+import {
+    cn,
+    flexPatterns,
+    spacing,
+    transitions,
+    bodyText,
+    gap,
+    responsiveHeadings,
+    gridLayouts,
+} from '@/lib/styles/theme';
+
+// ============================================================================
+// DATA
+// ============================================================================
+
+const usStocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'AMD'];
+
+// ============================================================================
+// COMPONENT VARIANTS
+// ============================================================================
+
+const premiumCardVariants = cva(
+    [transitions.opacity],
+    {
+        variants: {
+            locked: {
+                true: 'opacity-60',
+                false: '',
+            },
+        },
+        defaultVariants: {
+            locked: false,
+        },
+    }
+);
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 
 export default function StocksDemoPage() {
     const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
     const [searchInput, setSearchInput] = useState('AAPL');
-
-    const usStocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'AMD'];
 
     const handleSearch = () => {
         setSelectedSymbol(searchInput.toUpperCase());
     };
 
     return (
-        <div className="space-y-8">
-            {/* Header */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                    <TrendingUp className="w-8 h-8 text-primary" />
-                    <div>
-                        <h1 className="text-4xl font-bold">Stock Market Dashboard</h1>
-                        <p className="text-lg text-muted-foreground">
-                            FMP API Free Tier - US Stocks Only
-                        </p>
-                    </div>
-                </div>
+        <div className={spacing.xl}>
+            {/* Page Header */}
+            <PageHeader />
 
-                {/* Status Banner */}
-                <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
-                    <CardContent className="pt-6">
-                        <div className="flex items-start gap-3">
-                            <div className="text-2xl">ℹ️</div>
-                            <div>
-                                <h3 className="font-semibold mb-2">FMP Free Tier Active</h3>
-                                <p className="text-sm text-muted-foreground mb-2">
-                                    Currently showing US stocks only (AAPL, MSFT, GOOGL, etc.)
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    ✅ Working: Single Quotes, Company Profiles, Earnings Calendar<br />
-                                    🔒 Premium: Batch API, Market Data, Historical Charts, EU Stocks (ASML, Shell)
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+            {/* Free Tier Notice */}
+            <FreeTierBanner />
 
-                {/* Symbol Input */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>🔍 US Stock Lookup</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                            Enter US stock symbol (e.g., AAPL, MSFT, GOOGL)
-                        </p>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex gap-2">
-                            <Input
-                                value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                                placeholder="Enter symbol (AAPL, MSFT...)"
-                                className="flex-1"
-                            />
-                            <Button onClick={handleSearch}>
-                                Search
-                            </Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-3">
-                            <span className="text-sm text-muted-foreground">Popular:</span>
-                            {usStocks.map(symbol => (
-                                <Button
-                                    key={symbol}
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        setSearchInput(symbol);
-                                        setSelectedSymbol(symbol);
-                                    }}
-                                >
-                                    {symbol}
-                                </Button>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+            {/* Symbol Search */}
+            <SymbolSearch
+                searchInput={searchInput}
+                setSearchInput={setSearchInput}
+                handleSearch={handleSearch}
+                selectedSymbol={selectedSymbol}
+                setSelectedSymbol={setSelectedSymbol}
+            />
 
-            {/* Stock Quote */}
-            <div>
-                <h2 className="text-2xl font-bold mb-4">📊 Real-time Quote</h2>
-                <p className="text-muted-foreground mb-6">
-                    Live pricing data for {selectedSymbol}
-                </p>
-                <div className="max-w-md">
-                    <StockQuoteCard symbol={selectedSymbol} />
-                </div>
-            </div>
+            {/* Stock Quote Section */}
+            <QuoteSection symbol={selectedSymbol} />
 
             {/* Earnings Calendar */}
-            <div>
-                <h2 className="text-2xl font-bold mb-4">📅 Earnings Calendar</h2>
-                <p className="text-muted-foreground mb-6">
-                    Upcoming earnings announcements (next 14 days, showing top 10)
-                </p>
-                <EarningsCalendar daysAhead={14} limit={10} />
-            </div>
+            <EarningsSection />
 
-            {/* Premium Features Locked */}
-            <div>
-                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                    <Lock className="w-6 h-6" />
-                    🔒 Premium Features (FMP Starter $14/mo)
-                </h2>
-                <p className="text-muted-foreground mb-6">
-                    Unlock these features with FMP Starter subscription
-                </p>
+            {/* Premium Features */}
+            <PremiumFeatures />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <Card className="opacity-60">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Lock className="w-4 h-4" />
-                                Batch Quotes API
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground">
-                                Fetch 100 stocks in 1 API call<br />
-                                💰 90-99% cost savings<br />
-                                ⚡ 97% faster
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="opacity-60">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Lock className="w-4 h-4" />
-                                Market Overview
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground">
-                                Top gainers & losers<br />
-                                Most active stocks<br />
-                                Sector performance
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="opacity-60">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Lock className="w-4 h-4" />
-                                Historical Charts
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground">
-                                30-day price charts<br />
-                                OHLC data<br />
-                                Volume tracking
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="opacity-60">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Lock className="w-4 h-4" />
-                                Financial Metrics
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground">
-                                P/E, ROE, ROA ratios<br />
-                                Debt/Equity<br />
-                                Dividend yield
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="opacity-60">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Lock className="w-4 h-4" />
-                                Stock News
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground">
-                                International news<br />
-                                Real-time updates<br />
-                                Article images
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="opacity-60">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Lock className="w-4 h-4" />
-                                Analyst Ratings
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground">
-                                Price targets<br />
-                                Upgrades/downgrades<br />
-                                Analyst consensus
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="opacity-60">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Lock className="w-4 h-4" />
-                                EU Stocks
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground">
-                                ASML, Shell, ING<br />
-                                AEX index stocks<br />
-                                European markets
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-
-            {/* Features Overview */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>✨ Implementation Status</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <h3 className="font-semibold text-lg">✅ Active (Free Tier)</h3>
-                            <ul className="space-y-1 text-sm text-muted-foreground">
-                                <li>✓ US stock quotes (AAPL, MSFT, etc.)</li>
-                                <li>✓ Company profiles</li>
-                                <li>✓ Earnings calendar (14 days)</li>
-                                <li>✓ Cache statistics</li>
-                                <li>✓ Production-ready code</li>
-                            </ul>
-                        </div>
-
-                        <div className="space-y-2">
-                            <h3 className="font-semibold text-lg">🔒 Premium Ready</h3>
-                            <ul className="space-y-1 text-sm text-muted-foreground">
-                                <li>🔒 Batch quotes API (coded & tested)</li>
-                                <li>🔒 Market performance data</li>
-                                <li>🔒 Historical charts</li>
-                                <li>🔒 Financial metrics</li>
-                                <li>🔒 Stock news</li>
-                                <li>🔒 Analyst ratings</li>
-                                <li>🔒 EU stocks (ASML, Shell, ING)</li>
-                            </ul>
-                        </div>
-
-                        <div className="space-y-2">
-                            <h3 className="font-semibold text-lg">🎨 Components Built</h3>
-                            <ul className="space-y-1 text-sm text-muted-foreground">
-                                <li>✓ 12 stock components ready</li>
-                                <li>✓ 5 custom hooks</li>
-                                <li>✓ TypeScript types complete</li>
-                                <li>✓ Error handling</li>
-                                <li>✓ Loading states</li>
-                                <li>✓ Dark mode support</li>
-                            </ul>
-                        </div>
-
-                        <div className="space-y-2">
-                            <h3 className="font-semibold text-lg">💰 Upgrade Path</h3>
-                            <ul className="space-y-1 text-sm text-muted-foreground">
-                                <li>💵 FMP Starter: $14/month</li>
-                                <li>⚡ Unlock all 17 endpoints</li>
-                                <li>🌍 Global stock coverage</li>
-                                <li>📊 90-99% cost savings with batch API</li>
-                                <li>🚀 Code already implemented</li>
-                                <li>✨ Just uncomment routes & restart!</li>
-                            </ul>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Implementation Status */}
+            <ImplementationStatus />
 
             {/* Footer */}
-            <div className="text-center py-8 text-sm text-muted-foreground border-t">
-                <p>Data provided by Financial Modeling Prep (Free Tier)</p>
-                <p className="mt-2">
-                    All premium features are coded and tested - ready for instant activation! 🚀
-                </p>
+            <Footer />
+        </div>
+    );
+}
+
+// ============================================================================
+// SUB COMPONENTS
+// ============================================================================
+
+function PageHeader() {
+    return (
+        <div className={spacing.md}>
+            <div className={cn(flexPatterns.start, gap.sm)}>
+                <TrendingUp className="w-8 h-8 text-primary" />
+                <div>
+                    <h1 className={responsiveHeadings.h1}>Stock Market Dashboard</h1>
+                    <p className="text-lg text-muted-foreground">
+                        FMP API Free Tier - US Stocks Only
+                    </p>
+                </div>
             </div>
         </div>
     );
 }
+
+function FreeTierBanner() {
+    return (
+        <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+            <CardContent className="pt-6">
+                <div className={cn('flex items-start', gap.sm)}>
+                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <h3 className="font-semibold mb-2">FMP Free Tier Active</h3>
+                        <p className={cn(bodyText.small, 'text-muted-foreground mb-2')}>
+                            Currently showing US stocks only (AAPL, MSFT, GOOGL, etc.)
+                        </p>
+                        <p className={cn(bodyText.small, 'text-muted-foreground')}>
+                            ✅ Working: Single Quotes, Company Profiles, Earnings Calendar<br />
+                            🔒 Premium: Batch API, Market Data, Historical Charts, EU Stocks (ASML, Shell)
+                        </p>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function SymbolSearch({
+    searchInput,
+    setSearchInput,
+    handleSearch,
+    selectedSymbol,
+    setSelectedSymbol,
+}: any) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>🔍 US Stock Lookup</CardTitle>
+                <p className={cn(bodyText.small, 'text-muted-foreground')}>
+                    Enter US stock symbol (e.g., AAPL, MSFT, GOOGL)
+                </p>
+            </CardHeader>
+            <CardContent>
+                <div className={cn('flex', gap.sm)}>
+                    <Input
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                        placeholder="Enter symbol (AAPL, MSFT...)"
+                        className="flex-1"
+                    />
+                    <Button onClick={handleSearch}>Search</Button>
+                </div>
+                <div className={cn('flex flex-wrap items-center', gap.sm, 'mt-3')}>
+                    <span className={cn(bodyText.small, 'text-muted-foreground')}>Popular:</span>
+                    {usStocks.map((symbol) => (
+                        <Button
+                            key={symbol}
+                            variant={symbol === selectedSymbol ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => {
+                                setSearchInput(symbol);
+                                setSelectedSymbol(symbol);
+                            }}
+                        >
+                            {symbol}
+                        </Button>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function QuoteSection({ symbol }: { symbol: string }) {
+    return (
+        <div>
+            <h2 className="text-2xl font-bold mb-4">📊 Real-time Quote</h2>
+            <p className={cn(bodyText.base, 'text-muted-foreground mb-6')}>
+                Live pricing data for {symbol}
+            </p>
+            <div className="max-w-md">
+                <StockQuoteCard symbol={symbol} />
+            </div>
+        </div>
+    );
+}
+
+function EarningsSection() {
+    return (
+        <div>
+            <h2 className="text-2xl font-bold mb-4">📅 Earnings Calendar</h2>
+            <p className={cn(bodyText.base, 'text-muted-foreground mb-6')}>
+                Upcoming earnings announcements (next 14 days, showing top 10)
+            </p>
+            <EarningsCalendar daysAhead={14} limit={10} />
+        </div>
+    );
+}
+
+function PremiumFeatures() {
+    const premiumFeatures = [
+        {
+            title: 'Batch Quotes API',
+            items: ['Fetch 100 stocks in 1 API call', '💰 90-99% cost savings', '⚡ 97% faster'],
+        },
+        {
+            title: 'Market Overview',
+            items: ['Top gainers & losers', 'Most active stocks', 'Sector performance'],
+        },
+        {
+            title: 'Historical Charts',
+            items: ['30-day price charts', 'OHLC data', 'Volume tracking'],
+        },
+        {
+            title: 'Financial Metrics',
+            items: ['P/E, ROE, ROA ratios', 'Debt/Equity', 'Dividend yield'],
+        },
+        {
+            title: 'Stock News',
+            items: ['International news', 'Real-time updates', 'Article images'],
+        },
+        {
+            title: 'Analyst Ratings',
+            items: ['Price targets', 'Upgrades/downgrades', 'Analyst consensus'],
+        },
+        {
+            title: 'EU Stocks',
+            items: ['ASML, Shell, ING', 'AEX index stocks', 'European markets'],
+        },
+    ];
+
+    return (
+        <div>
+            <h2 className={cn('text-2xl font-bold mb-4', flexPatterns.start, gap.sm)}>
+                <Lock className="w-6 h-6" />
+                🔒 Premium Features (FMP Starter $14/mo)
+            </h2>
+            <p className={cn(bodyText.base, 'text-muted-foreground mb-6')}>
+                Unlock these features with FMP Starter subscription
+            </p>
+
+            <div className={cn(gridLayouts.threeColumn, gap.lg)}>
+                {premiumFeatures.map((feature) => (
+                    <Card key={feature.title} className={premiumCardVariants({ locked: true })}>
+                        <CardHeader>
+                            <CardTitle className={cn(flexPatterns.start, gap.sm, 'text-lg')}>
+                                <Lock className="w-4 h-4" />
+                                {feature.title}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ul className={cn(bodyText.small, 'text-muted-foreground space-y-1')}>
+                                {feature.items.map((item, idx) => (
+                                    <li key={idx}>{item}</li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function ImplementationStatus() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>✨ Implementation Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className={cn(gridLayouts.fourColumn, gap.lg)}>
+                    <StatusColumn
+                        title="✅ Active (Free Tier)"
+                        items={[
+                            'US stock quotes (AAPL, MSFT, etc.)',
+                            'Company profiles',
+                            'Earnings calendar (14 days)',
+                            'Cache statistics',
+                            'Production-ready code',
+                        ]}
+                    />
+                    <StatusColumn
+                        title="🔒 Premium Ready"
+                        items={[
+                            'Batch quotes API (coded & tested)',
+                            'Market performance data',
+                            'Historical charts',
+                            'Financial metrics',
+                            'Stock news',
+                            'Analyst ratings',
+                            'EU stocks (ASML, Shell, ING)',
+                        ]}
+                    />
+                    <StatusColumn
+                        title="🎨 Components Built"
+                        items={[
+                            '12 stock components ready',
+                            '5 custom hooks',
+                            'TypeScript types complete',
+                            'Error handling',
+                            'Loading states',
+                            'Dark mode support',
+                        ]}
+                    />
+                    <StatusColumn
+                        title="💰 Upgrade Path"
+                        items={[
+                            'FMP Starter: $14/month',
+                            'Unlock all 17 endpoints',
+                            'Global stock coverage',
+                            '90-99% cost savings with batch API',
+                            'Code already implemented',
+                            'Just uncomment routes & restart!',
+                        ]}
+                    />
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function StatusColumn({ title, items }: { title: string; items: string[] }) {
+    return (
+        <div className={spacing.xs}>
+            <h3 className="font-semibold text-lg mb-2">{title}</h3>
+            <ul className={cn(bodyText.small, 'text-muted-foreground space-y-1')}>
+                {items.map((item, idx) => (
+                    <li key={idx} className={cn(flexPatterns.start, 'items-start', gap.xs)}>
+                        {item.startsWith('✓') || item.startsWith('🔒') ? (
+                            item
+                        ) : (
+                            <>
+                                <span className="shrink-0">{title.includes('Active') ? '✓' : title.includes('Premium') ? '🔒' : title.includes('Components') ? '✓' : '💵'}</span>
+                                {item}
+                            </>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
+function Footer() {
+    return (
+        <div className="text-center py-8 border-t">
+            <p className={cn(bodyText.small, 'text-muted-foreground')}>
+                Data provided by Financial Modeling Prep (Free Tier)
+            </p>
+            <p className={cn(bodyText.small, 'text-muted-foreground mt-2')}>
+                All premium features are coded and tested - ready for instant activation! 🚀
+            </p>
+        </div>
+    );
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+export { premiumCardVariants };

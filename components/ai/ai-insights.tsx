@@ -1,12 +1,26 @@
 'use client';
 
+import { cva, type VariantProps } from 'class-variance-authority';
 import { AIEnrichment } from '@/lib/types/api';
 import { SentimentBadge } from './sentiment-badge';
 import { EntityChip } from './entity-chip';
 import { KeywordTag } from './keyword-tag';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, AlertCircle, Clock } from 'lucide-react';
+import { Sparkles, AlertCircle, Clock, Users, Building, MapPin, Key } from 'lucide-react';
 import { LightweightErrorBoundary } from '@/components/error-boundary';
+import {
+    cn,
+    flexPatterns,
+    spacing,
+    transitions,
+    bodyText,
+    gap,
+    cardStyles,
+} from '@/lib/styles/theme';
+
+// ============================================================================
+// TYPES & INTERFACES
+// ============================================================================
 
 interface AIInsightsProps {
     enrichment: AIEnrichment;
@@ -14,265 +28,374 @@ interface AIInsightsProps {
     onKeywordClick?: (keyword: string) => void;
 }
 
+type EntityType = 'persons' | 'organizations' | 'locations';
+
+// ============================================================================
+// COMPONENT VARIANTS
+// ============================================================================
+
+const stateBannerVariants = cva(
+    ['border', transitions.colors],
+    {
+        variants: {
+            state: {
+                processing: 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20',
+                error: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20',
+                empty: '',
+            },
+        },
+        defaultVariants: {
+            state: 'empty',
+        },
+    }
+);
+
+const stateTextVariants = cva(
+    [bodyText.small, 'font-medium'],
+    {
+        variants: {
+            state: {
+                processing: 'text-yellow-900 dark:text-yellow-100',
+                error: 'text-red-900 dark:text-red-100',
+                muted: 'text-muted-foreground',
+            },
+        },
+    }
+);
+
+const sectionHeaderVariants = cva(
+    [bodyText.small, 'font-semibold mb-2', flexPatterns.start, gap.sm],
+    {
+        variants: {
+            variant: {
+                default: '',
+                withIcon: 'items-center',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+const summaryBoxVariants = cva(
+    ['p-3 rounded-lg border', transitions.colors],
+    {
+        variants: {
+            variant: {
+                default: 'bg-muted/50 border-border',
+                elevated: 'bg-card border-primary/20',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
 export function AIInsights({ enrichment, onEntityClick, onKeywordClick }: AIInsightsProps) {
     // Not processed yet
     if (!enrichment.processed) {
-        return (
-            <Card className="border-yellow-200 bg-yellow-50/50">
-                <CardContent className="pt-6 flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-yellow-600 animate-pulse" />
-                    <div>
-                        <p className="text-sm font-medium text-yellow-900">
-                            AI analyse wordt verwerkt...
-                        </p>
-                        <p className="text-xs text-yellow-700 mt-1">
-                            Dit artikel wordt binnenkort automatisch verrijkt met AI insights.
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
-        );
+        return <ProcessingState />;
     }
 
     // Processing error
     if (enrichment.error) {
-        return (
-            <Card className="border-red-200 bg-red-50/50">
-                <CardContent className="pt-6 flex items-center gap-3">
-                    <AlertCircle className="h-5 w-5 text-red-600" />
-                    <div>
-                        <p className="text-sm font-medium text-red-900">
-                            AI analyse mislukt
-                        </p>
-                        <p className="text-xs text-red-700 mt-1">
-                            {enrichment.error}
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
-        );
+        return <ErrorState error={enrichment.error} />;
     }
 
-    const hasAnyData = enrichment.sentiment ||
+    const hasAnyData =
+        enrichment.sentiment ||
         enrichment.categories ||
         enrichment.entities ||
         enrichment.keywords ||
         enrichment.summary;
 
     if (!hasAnyData) {
-        return (
-            <Card>
-                <CardContent className="pt-6">
-                    <p className="text-sm text-muted-foreground text-center">
-                        Geen AI insights beschikbaar voor dit artikel.
-                    </p>
-                </CardContent>
-            </Card>
-        );
+        return <EmptyState />;
     }
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
+                <CardTitle className={cn('text-base', flexPatterns.start, gap.sm)}>
                     <Sparkles className="h-4 w-4 text-primary" />
                     AI Insights
                 </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className={spacing.md}>
                 {/* Sentiment Analysis */}
-                <LightweightErrorBoundary componentName="Sentiment">
-                    {enrichment.sentiment && (
-                        <div>
-                            <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                                Sentiment Analyse
-                                {enrichment.sentiment.confidence && (
-                                    <span className="text-xs font-normal text-muted-foreground">
-                                        ({(enrichment.sentiment.confidence * 100).toFixed(0)}% zekerheid)
-                                    </span>
-                                )}
-                            </h4>
-                            <SentimentBadge sentiment={enrichment.sentiment} showConfidence />
-                        </div>
-                    )}
-                </LightweightErrorBoundary>
+                {enrichment.sentiment && (
+                    <LightweightErrorBoundary componentName="Sentiment">
+                        <SentimentSection sentiment={enrichment.sentiment} />
+                    </LightweightErrorBoundary>
+                )}
 
                 {/* Categories */}
-                <LightweightErrorBoundary componentName="Categories">
-                    {enrichment.categories && Object.keys(enrichment.categories).length > 0 && (
-                        <div>
-                            <h4 className="text-sm font-semibold mb-2">
-                                AI Categorieën
-                                <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                    Top {Math.min(3, Object.keys(enrichment.categories).length)}
-                                </span>
-                            </h4>
-                            <div className="flex flex-wrap gap-2">
-                                {Object.entries(enrichment.categories)
-                                    .sort(([, a], [, b]) => b - a)
-                                    .slice(0, 3)
-                                    .map(([category, confidence]) => (
-                                        <a
-                                            key={category}
-                                            href={`/?category=${encodeURIComponent(category)}`}
-                                            className="group"
-                                        >
-                                            <span
-                                                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary border border-primary/20 transition-all hover:bg-primary/20 hover:scale-105 hover:shadow-md"
-                                                title={`Confidence: ${(confidence * 100).toFixed(0)}%`}
-                                            >
-                                                {category}
-                                                <span className="opacity-75 text-[10px]">
-                                                    {(confidence * 100).toFixed(0)}%
-                                                </span>
-                                            </span>
-                                        </a>
-                                    ))}
-                            </div>
-                        </div>
-                    )}
-                </LightweightErrorBoundary>
+                {enrichment.categories && Object.keys(enrichment.categories).length > 0 && (
+                    <LightweightErrorBoundary componentName="Categories">
+                        <CategoriesSection categories={enrichment.categories} />
+                    </LightweightErrorBoundary>
+                )}
 
                 {/* Entities */}
-                <LightweightErrorBoundary componentName="Entities">
-                    {enrichment.entities && (
-                        <div className="space-y-3">
-                            {enrichment.entities.persons && enrichment.entities.persons.length > 0 && (
-                                <div>
-                                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                                        👤 Personen
-                                        <span className="text-xs font-normal text-muted-foreground">
-                                            ({enrichment.entities.persons.length})
-                                        </span>
-                                    </h4>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {enrichment.entities.persons.slice(0, 5).map((person) => (
-                                            <EntityChip
-                                                key={person}
-                                                name={person}
-                                                type="persons"
-                                                onClick={onEntityClick ? () => onEntityClick(person, 'persons') : undefined}
-                                            />
-                                        ))}
-                                        {enrichment.entities.persons.length > 5 && (
-                                            <span className="text-xs text-muted-foreground self-center">
-                                                +{enrichment.entities.persons.length - 5} meer
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {enrichment.entities.organizations && enrichment.entities.organizations.length > 0 && (
-                                <div>
-                                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                                        🏢 Organisaties
-                                        <span className="text-xs font-normal text-muted-foreground">
-                                            ({enrichment.entities.organizations.length})
-                                        </span>
-                                    </h4>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {enrichment.entities.organizations.slice(0, 5).map((org) => (
-                                            <EntityChip
-                                                key={org}
-                                                name={org}
-                                                type="organizations"
-                                                onClick={onEntityClick ? () => onEntityClick(org, 'organizations') : undefined}
-                                            />
-                                        ))}
-                                        {enrichment.entities.organizations.length > 5 && (
-                                            <span className="text-xs text-muted-foreground self-center">
-                                                +{enrichment.entities.organizations.length - 5} meer
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {enrichment.entities.locations && enrichment.entities.locations.length > 0 && (
-                                <div>
-                                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                                        📍 Locaties
-                                        <span className="text-xs font-normal text-muted-foreground">
-                                            ({enrichment.entities.locations.length})
-                                        </span>
-                                    </h4>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {enrichment.entities.locations.slice(0, 5).map((location) => (
-                                            <EntityChip
-                                                key={location}
-                                                name={location}
-                                                type="locations"
-                                                onClick={onEntityClick ? () => onEntityClick(location, 'locations') : undefined}
-                                            />
-                                        ))}
-                                        {enrichment.entities.locations.length > 5 && (
-                                            <span className="text-xs text-muted-foreground self-center">
-                                                +{enrichment.entities.locations.length - 5} meer
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </LightweightErrorBoundary>
+                {enrichment.entities && (
+                    <LightweightErrorBoundary componentName="Entities">
+                        <EntitiesSection entities={enrichment.entities} onEntityClick={onEntityClick} />
+                    </LightweightErrorBoundary>
+                )}
 
                 {/* Keywords */}
-                <LightweightErrorBoundary componentName="Keywords">
-                    {enrichment.keywords && enrichment.keywords.length > 0 && (
-                        <div>
-                            <h4 className="text-sm font-semibold mb-2">
-                                Sleutelwoorden
-                                <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                    Top {Math.min(8, enrichment.keywords.length)} op relevantie
-                                </span>
-                            </h4>
-                            <div className="flex flex-wrap gap-1.5">
-                                {enrichment.keywords
-                                    .sort((a, b) => b.score - a.score)
-                                    .slice(0, 8)
-                                    .map((kw) => (
-                                        <KeywordTag
-                                            key={kw.word}
-                                            keyword={kw.word}
-                                            score={kw.score}
-                                            onClick={onKeywordClick ? () => onKeywordClick(kw.word) : undefined}
-                                        />
-                                    ))}
-                            </div>
-                        </div>
-                    )}
-                </LightweightErrorBoundary>
+                {enrichment.keywords && enrichment.keywords.length > 0 && (
+                    <LightweightErrorBoundary componentName="Keywords">
+                        <KeywordsSection keywords={enrichment.keywords} onKeywordClick={onKeywordClick} />
+                    </LightweightErrorBoundary>
+                )}
 
                 {/* AI Summary */}
-                <LightweightErrorBoundary componentName="AI Summary">
-                    {enrichment.summary && (
-                        <div>
-                            <h4 className="text-sm font-semibold mb-2">AI Samenvatting</h4>
-                            <div className="p-3 rounded-lg bg-muted/50 border border-border">
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {enrichment.summary}
-                                </p>
-                            </div>
-                        </div>
-                    )}
-                </LightweightErrorBoundary>
+                {enrichment.summary && (
+                    <LightweightErrorBoundary componentName="AI Summary">
+                        <SummarySection summary={enrichment.summary} />
+                    </LightweightErrorBoundary>
+                )}
 
                 {/* Processing Info */}
-                {enrichment.processed_at && (
-                    <p className="text-xs text-muted-foreground pt-2 border-t flex items-center gap-2">
-                        <Clock className="h-3 w-3" />
-                        Verwerkt op: {new Date(enrichment.processed_at).toLocaleString('nl-NL', {
-                            day: '2-digit',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                        })}
-                    </p>
-                )}
+                {enrichment.processed_at && <ProcessingInfo processedAt={enrichment.processed_at} />}
             </CardContent>
         </Card>
     );
 }
+
+// ============================================================================
+// STATE COMPONENTS
+// ============================================================================
+
+function ProcessingState() {
+    return (
+        <Card className={stateBannerVariants({ state: 'processing' })}>
+            <CardContent className={cn('pt-6', flexPatterns.start, gap.sm)}>
+                <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400 animate-pulse" />
+                <div>
+                    <p className={stateTextVariants({ state: 'processing' })}>AI analyse wordt verwerkt...</p>
+                    <p className={cn(bodyText.xs, 'text-yellow-700 dark:text-yellow-300 mt-1')}>
+                        Dit artikel wordt binnenkort automatisch verrijkt met AI insights.
+                    </p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function ErrorState({ error }: { error: string }) {
+    return (
+        <Card className={stateBannerVariants({ state: 'error' })}>
+            <CardContent className={cn('pt-6', flexPatterns.start, gap.sm)}>
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <div>
+                    <p className={stateTextVariants({ state: 'error' })}>AI analyse mislukt</p>
+                    <p className={cn(bodyText.xs, 'text-red-700 dark:text-red-300 mt-1')}>{error}</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function EmptyState() {
+    return (
+        <Card>
+            <CardContent className="pt-6">
+                <p className={cn(bodyText.small, 'text-muted-foreground text-center')}>
+                    Geen AI insights beschikbaar voor dit artikel.
+                </p>
+            </CardContent>
+        </Card>
+    );
+}
+
+// ============================================================================
+// SECTION COMPONENTS
+// ============================================================================
+
+function SentimentSection({ sentiment }: { sentiment: any }) {
+    return (
+        <div>
+            <h4 className={sectionHeaderVariants()}>
+                Sentiment Analyse
+                {sentiment.confidence && (
+                    <span className={cn(bodyText.xs, 'font-normal text-muted-foreground')}>
+                        ({(sentiment.confidence * 100).toFixed(0)}% zekerheid)
+                    </span>
+                )}
+            </h4>
+            <SentimentBadge sentiment={sentiment} showConfidence />
+        </div>
+    );
+}
+
+function CategoriesSection({ categories }: { categories: Record<string, number> }) {
+    return (
+        <div>
+            <h4 className={sectionHeaderVariants()}>
+                AI Categorieën
+                <span className={cn(bodyText.xs, 'font-normal text-muted-foreground')}>
+                    Top {Math.min(3, Object.keys(categories).length)}
+                </span>
+            </h4>
+            <div className={cn('flex flex-wrap', gap.sm)}>
+                {Object.entries(categories)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 3)
+                    .map(([category, confidence]) => (
+                        <a key={category} href={`/?category=${encodeURIComponent(category)}`} className="group">
+                            <span
+                                className={cn(
+                                    'inline-flex items-center gap-1 rounded-full',
+                                    'bg-primary/10 px-3 py-1',
+                                    bodyText.xs,
+                                    'font-semibold text-primary',
+                                    'border border-primary/20',
+                                    transitions.base,
+                                    'hover:bg-primary/20 hover:scale-105 hover:shadow-md'
+                                )}
+                                title={`Confidence: ${(confidence * 100).toFixed(0)}%`}
+                            >
+                                {category}
+                                <span className="opacity-75 text-[10px]">{(confidence * 100).toFixed(0)}%</span>
+                            </span>
+                        </a>
+                    ))}
+            </div>
+        </div>
+    );
+}
+
+function EntitiesSection({
+    entities,
+    onEntityClick,
+}: {
+    entities: any;
+    onEntityClick?: (entity: string, type: EntityType) => void;
+}) {
+    const entityTypes: Array<{
+        key: 'persons' | 'organizations' | 'locations';
+        icon: React.ComponentType<{ className?: string }>;
+        label: string;
+        emoji: string;
+    }> = [
+            { key: 'persons', icon: Users, label: 'Personen', emoji: '👤' },
+            { key: 'organizations', icon: Building, label: 'Organisaties', emoji: '🏢' },
+            { key: 'locations', icon: MapPin, label: 'Locaties', emoji: '📍' },
+        ];
+
+    return (
+        <div className={spacing.sm}>
+            {entityTypes.map(({ key, icon: Icon, label, emoji }) => {
+                const items = entities[key];
+                if (!items || items.length === 0) return null;
+
+                return (
+                    <div key={key}>
+                        <h4 className={sectionHeaderVariants({ variant: 'withIcon' })}>
+                            <span className="text-base">{emoji}</span>
+                            {label}
+                            <span className={cn(bodyText.xs, 'font-normal text-muted-foreground')}>
+                                ({items.length})
+                            </span>
+                        </h4>
+                        <div className={cn('flex flex-wrap', gap.xs)}>
+                            {items.slice(0, 5).map((item: string) => (
+                                <EntityChip
+                                    key={item}
+                                    name={item}
+                                    type={key}
+                                    onClick={onEntityClick ? () => onEntityClick(item, key) : undefined}
+                                />
+                            ))}
+                            {items.length > 5 && (
+                                <span className={cn(bodyText.xs, 'text-muted-foreground self-center')}>
+                                    +{items.length - 5} meer
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+function KeywordsSection({
+    keywords,
+    onKeywordClick,
+}: {
+    keywords: Array<{ word: string; score: number }>;
+    onKeywordClick?: (keyword: string) => void;
+}) {
+    return (
+        <div>
+            <h4 className={sectionHeaderVariants()}>
+                <Key className="h-4 w-4" />
+                Sleutelwoorden
+                <span className={cn(bodyText.xs, 'font-normal text-muted-foreground')}>
+                    Top {Math.min(8, keywords.length)} op relevantie
+                </span>
+            </h4>
+            <div className={cn('flex flex-wrap', gap.xs)}>
+                {keywords
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 8)
+                    .map((kw) => (
+                        <KeywordTag
+                            key={kw.word}
+                            keyword={kw.word}
+                            score={kw.score}
+                            onClick={onKeywordClick ? () => onKeywordClick(kw.word) : undefined}
+                        />
+                    ))}
+            </div>
+        </div>
+    );
+}
+
+function SummarySection({ summary }: { summary: string }) {
+    return (
+        <div>
+            <h4 className={cn(bodyText.small, 'font-semibold mb-2')}>AI Samenvatting</h4>
+            <div className={summaryBoxVariants()}>
+                <p className={cn(bodyText.small, 'text-muted-foreground leading-relaxed')}>{summary}</p>
+            </div>
+        </div>
+    );
+}
+
+function ProcessingInfo({ processedAt }: { processedAt: string }) {
+    return (
+        <p className={cn(bodyText.xs, 'text-muted-foreground pt-2 border-t', flexPatterns.start, gap.sm)}>
+            <Clock className="h-3 w-3" />
+            Verwerkt op:{' '}
+            {new Date(processedAt).toLocaleString('nl-NL', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            })}
+        </p>
+    );
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+export {
+    stateBannerVariants,
+    stateTextVariants,
+    sectionHeaderVariants,
+    summaryBoxVariants,
+};
+export type { AIInsightsProps, EntityType };

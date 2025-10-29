@@ -1,34 +1,58 @@
-// API Response Types based on Backend API Documentation
-
-export interface APIResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: APIError;
-  meta?: Meta;
-  request_id: string;
-  timestamp: string;
+export interface EmailStats {
+  total_emails: number;
+  processed_emails: number;
+  failed_emails: number;
+  pending_emails: number;
 }
 
-export interface APIError {
-  code: string;
+export interface EmailFetchResponse {
   message: string;
-  details?: string;
+  articles_created: number;
+  status: 'completed' | 'failed' | 'in_progress';
 }
 
-export interface Meta {
-  pagination?: PaginationMeta;
-  sorting?: SortingMeta;
-  filtering?: FilteringMeta;
+export interface EmailConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  use_tls: boolean;
+  allowed_senders: string[];
+  poll_interval_minutes: number;
+  max_retries: number;
+  retry_delay_seconds: number;
+  mark_as_read: boolean;
+  delete_after_read: boolean;
+  fetch_existing: boolean;
+  max_days_back: number;
 }
 
 export interface PaginationMeta {
   total: number;
-  limit: number;
-  offset: number;
   current_page: number;
+  page_size: number;
   total_pages: number;
   has_next: boolean;
   has_prev: boolean;
+}
+
+// Base API Response Type
+export interface APIResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: APIError;
+  request_id: string;
+  rate_limit?: RateLimitHeaders;
+  meta?: {
+    pagination?: PaginationMeta;
+  };
+}
+
+// API Error Type
+export interface APIError {
+  code: ErrorCode;
+  message: string;
+  details?: string;
 }
 
 export interface SortingMeta {

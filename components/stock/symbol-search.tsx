@@ -72,7 +72,7 @@ export function SymbolSearch({ placeholder = 'Zoek aandeel...', onSelect }: Symb
 
                     {!loading && results && results.results.length === 0 && (
                         <div className="p-4 text-sm text-muted-foreground text-center">
-                            Geen resultaten gevonden voor "{query}"
+                            Geen resultaten gevonden voor &quot;{query}&quot;
                         </div>
                     )}
 

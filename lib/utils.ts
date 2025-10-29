@@ -1,8 +1,5 @@
-import { type ClassValue, clsx } from 'clsx';
-
-export function cn(...inputs: ClassValue[]) {
-  return clsx(inputs);
-}
+// Re-export enhanced cn from theme for backward compatibility
+export { cn } from '@/lib/styles/theme';
 
 export function formatDate(date: string): string {
   return new Date(date).toLocaleDateString('nl-NL', {
@@ -65,5 +62,11 @@ export function debounce<T extends (...args: any[]) => any>(
   };
 }
 
-// Re-export from theme for consistency
-export { getSourceColor, getCategoryIcon } from '@/lib/styles/theme';
+// Re-export all commonly used functions from theme for consistency
+export {
+  getSourceColor,
+  getCategoryIcon,
+  getSentimentColor,
+  getStatusColor,
+  when
+} from '@/lib/styles/theme';

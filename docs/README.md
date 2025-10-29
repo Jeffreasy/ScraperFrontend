@@ -43,18 +43,35 @@ Voor developers die aan het project werken:
 
 Voor developers en designers:
 
-- **[Design System](styling/DESIGN-SYSTEM.md)** - Complete design tokens
-  - Kleuren & theming
-  - Typography systeem
-  - Spacing & layout
-  - Component variants
-  - Dark mode support
+- **[Design System](styling/DESIGN-SYSTEM.md)** - Complete design tokens (458 regels)
+  - Kleuren & theming (CSS variabelen)
+  - Typography systeem (Inter font, 7 sizes)
+  - Spacing & layout (4px grid systeem)
+  - Component variants (Card, Button, Badge)
+  - Dark mode support (HSL color system)
+  - Animations (transitions, keyframes)
+  - Z-index hierarchy
 
-- **[Component Styling](styling/COMPONENT-STYLING.md)** - Styling richtlijnen
-  - Tailwind best practices
-  - Responsive patterns
-  - Component patterns
-  - Accessibility guidelines
+- **[Component Styling](styling/COMPONENT-STYLING.md)** - Styling richtlijnen (618 regels)
+  - Tailwind utility-first aanpak
+  - cn() utility voor class composition
+  - Responsive patterns (mobile-first)
+  - Component patterns (Card, Button, Input, Badge)
+  - State styling (hover, focus, active, disabled, loading)
+  - Layout patterns (Grid, Flex, Stack)
+  - Accessibility guidelines (focus states, semantic HTML)
+  - Common pitfalls te vermijden
+
+- **[Styling Optimizations](styling/STYLING-OPTIMIZATIONS.md)** - Nieuwe features (495 regels) ✨ NIEUW
+  - Class Variance Authority (CVA) voor type-safe variants
+  - next-themes voor dark mode ondersteuning
+  - Tailwind plugins (typography, forms, animations)
+  - Enhanced theme system met utilities
+  - Custom CSS utilities (15+ classes)
+  - Component refactors (Button, Card)
+  - Dark mode implementation guide
+  - Migration guide voor bestaande code
+  - Best practices en voorbeelden
 
 ### 🔌 API Integration
 
@@ -209,7 +226,9 @@ docs/
 |-----------|--------------|
 | **Setup & Installation** | [Quickstart](getting-started/QUICKSTART.md) |
 | **Component Development** | [Development Guide](development/DEVELOPMENT.md) |
-| **Styling & Design** | [Design System](styling/DESIGN-SYSTEM.md), [Component Styling](styling/COMPONENT-STYLING.md) |
+| **Styling & Design** | [Design System](styling/DESIGN-SYSTEM.md), [Component Styling](styling/COMPONENT-STYLING.md), [Optimizations](styling/STYLING-OPTIMIZATIONS.md) ✨ |
+| **Dark Mode** | [Styling Optimizations](styling/STYLING-OPTIMIZATIONS.md#dark-mode-implementation) ✨ |
+| **CVA Variants** | [Styling Optimizations](styling/STYLING-OPTIMIZATIONS.md#component-refactors) ✨ |
 | **API Calls** | [Advanced API](api/ADVANCED-API.md) |
 | **State Management** | [Development Guide](development/DEVELOPMENT.md#state-management) |
 | **Performance** | [Optimizations](development/OPTIMIZATIONS.md) |

@@ -1,51 +1,145 @@
 'use client';
 
+import { cva, type VariantProps } from 'class-variance-authority';
+import { Star } from 'lucide-react';
+import {
+    cn,
+    transitions,
+    bodyText,
+    focusEffects,
+} from '@/lib/styles/theme';
+
+// ============================================================================
+// TYPES & INTERFACES
+// ============================================================================
+
 interface KeywordTagProps {
     keyword: string;
     score: number;
     onClick?: () => void;
+    showStar?: boolean;
 }
 
-export function KeywordTag({ keyword, score, onClick }: KeywordTagProps) {
-    // Size based on relevance score (0.0-1.0)
+// ============================================================================
+// COMPONENT VARIANTS
+// ============================================================================
+
+const keywordTagVariants = cva(
+    [
+        'inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-medium',
+        transitions.base,
+    ],
+    {
+        variants: {
+            relevance: {
+                high: 'bg-primary text-primary-foreground',
+                medium: 'bg-primary/70 text-primary-foreground',
+                low: 'bg-secondary text-secondary-foreground',
+            },
+            interactive: {
+                true: 'cursor-pointer hover:scale-110 hover:shadow-md active:scale-95',
+                false: 'hover:opacity-100',
+            },
+        },
+        defaultVariants: {
+            relevance: 'medium',
+            interactive: false,
+        },
+    }
+);
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+function getRelevanceLevel(score: number): 'high' | 'medium' | 'low' {
+    if (score >= 0.7) return 'high';
+    if (score >= 0.4) return 'medium';
+    return 'low';
+}
+
+function calculateFontSize(score: number): string {
     const minSize = 0.75;
     const maxSize = 1.1;
-    const fontSize = `${minSize + (score * (maxSize - minSize))}rem`;
+    return `${minSize + score * (maxSize - minSize)}rem`;
+}
 
-    // Opacity based on score
+function calculateOpacity(score: number, interactive: boolean): number {
+    if (interactive) return 1;
     const minOpacity = 0.6;
     const maxOpacity = 1.0;
-    const opacity = minOpacity + (score * (maxOpacity - minOpacity));
+    return minOpacity + score * (maxOpacity - minOpacity);
+}
 
-    // Color intensity based on score
-    const getColorClass = () => {
-        if (score >= 0.7) {
-            return 'bg-primary text-primary-foreground';
-        } else if (score >= 0.4) {
-            return 'bg-primary/70 text-primary-foreground';
-        } else {
-            return 'bg-secondary text-secondary-foreground';
-        }
-    };
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 
+export function KeywordTag({ keyword, score, onClick, showStar = true }: KeywordTagProps) {
+    const relevance = getRelevanceLevel(score);
+    const fontSize = calculateFontSize(score);
+    const opacity = calculateOpacity(score, !!onClick);
     const Component = onClick ? 'button' : 'span';
 
     return (
         <Component
-            className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition-all ${getColorClass()} ${onClick ? 'cursor-pointer hover:scale-110 hover:shadow-md active:scale-95' : 'hover:opacity-100'
-                }`}
+            className={cn(
+                keywordTagVariants({ relevance, interactive: !!onClick }),
+                onClick && focusEffects.ring
+            )}
             style={{
                 fontSize,
-                opacity: onClick ? 1 : opacity // Always full opacity if clickable
+                opacity,
             }}
             onClick={onClick}
-            title={`Relevance: ${(score * 100).toFixed(0)}% ${onClick ? '(Click to search)' : ''}`}
+            title={`Relevance: ${(score * 100).toFixed(0)}%${onClick ? ' (Click to search)' : ''}`}
             aria-label={`Keyword: ${keyword}, relevance ${(score * 100).toFixed(0)}%`}
+            {...(onClick && { type: 'button' })}
         >
             <span>{keyword}</span>
-            {score >= 0.7 && (
-                <span className="text-[10px] opacity-75">★</span>
+            {showStar && score >= 0.7 && (
+                <Star className="h-3 w-3 fill-current" aria-hidden="true" />
             )}
         </Component>
     );
 }
+
+// ============================================================================
+// COMPACT VARIANT
+// ============================================================================
+
+/**
+ * Compact keyword tag without dynamic sizing
+ */
+export function KeywordTagCompact({
+    keyword,
+    onClick,
+}: {
+    keyword: string;
+    onClick?: () => void;
+}) {
+    const Component = onClick ? 'button' : 'span';
+
+    return (
+        <Component
+            className={cn(
+                'inline-flex items-center rounded-md px-2 py-0.5',
+                bodyText.xs,
+                'font-medium bg-secondary text-secondary-foreground',
+                onClick && 'cursor-pointer hover:bg-secondary/80',
+                transitions.colors
+            )}
+            onClick={onClick}
+            {...(onClick && { type: 'button' })}
+        >
+            {keyword}
+        </Component>
+    );
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+export { keywordTagVariants };
+export type { KeywordTagProps };
