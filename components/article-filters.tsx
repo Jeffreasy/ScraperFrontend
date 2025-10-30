@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { X, Calendar, Tag, Filter as FilterIcon } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
-import { ArticleFilters } from '@/lib/types/api';
+import { ArticleFilters, SourceInfo, CategoryInfo } from '@/lib/types/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -114,8 +114,8 @@ export function ArticleFiltersPanel({
     queryFn: () => apiClient.getCategories(),
   });
 
-  const sources = sourcesData?.success ? sourcesData.data : [];
-  const categories = categoriesData?.success ? categoriesData.data : [];
+  const sources = sourcesData?.sources || [];
+  const categories = categoriesData?.categories || [];
 
   const handleReset = () => {
     onFilterChange({
@@ -186,12 +186,12 @@ export function ArticleFiltersPanel({
             >
               Alle bronnen
             </FilterButton>
-            {sources?.map((source) => (
+            {sources?.map((source: SourceInfo) => (
               <FilterButton
                 key={source.name}
                 isActive={filters.source === source.name}
                 onClick={() => onFilterChange({ source: source.name })}
-                disabled={!source.is_active}
+                disabled={!source.active}
               >
                 {source.name}
               </FilterButton>
@@ -208,7 +208,7 @@ export function ArticleFiltersPanel({
             >
               Alle categorieën
             </FilterButton>
-            {categories?.map((category) => (
+            {categories?.map((category: CategoryInfo) => (
               <FilterButton
                 key={category.name}
                 isActive={filters.category === category.name}

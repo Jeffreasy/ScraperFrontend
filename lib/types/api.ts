@@ -1,85 +1,34 @@
-export interface EmailStats {
-  total_emails: number;
-  processed_emails: number;
-  failed_emails: number;
-  pending_emails: number;
+// ============================================================================
+// Base Types
+// ============================================================================
+
+export interface PaginationParams {
+  limit?: number;
+  offset?: number;
 }
 
-export interface EmailFetchResponse {
-  message: string;
-  articles_created: number;
-  status: 'completed' | 'failed' | 'in_progress';
-}
-
-export interface EmailConfig {
-  enabled: boolean;
-  host: string;
-  port: number;
-  username: string;
-  use_tls: boolean;
-  allowed_senders: string[];
-  poll_interval_minutes: number;
-  max_retries: number;
-  retry_delay_seconds: number;
-  mark_as_read: boolean;
-  delete_after_read: boolean;
-  fetch_existing: boolean;
-  max_days_back: number;
-}
-
-export interface PaginationMeta {
+export interface PaginationResponse {
   total: number;
-  current_page: number;
-  page_size: number;
-  total_pages: number;
-  has_next: boolean;
-  has_prev: boolean;
+  limit: number;
+  offset: number;
 }
 
-// Base API Response Type
-export interface APIResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: APIError;
-  request_id: string;
-  rate_limit?: RateLimitHeaders;
-  meta?: {
-    pagination?: PaginationMeta;
-  };
-}
-
-// API Error Type
-export interface APIError {
-  code: ErrorCode;
+export interface ErrorResponse {
+  error: string;
   message: string;
-  details?: string;
+  code: number;
 }
 
-export interface SortingMeta {
-  sort_by: string;
-  sort_order: 'asc' | 'desc';
-}
-
-export interface FilteringMeta {
-  source?: string;
-  category?: string;
-  keyword?: string;
-  search?: string;
-  start_date?: string;
-  end_date?: string;
-}
-
+// ============================================================================
 // Article Types
+// ============================================================================
 
 export interface Article {
   id: number;
   title: string;
   summary: string;
-  content?: string;
-  content_extracted: boolean;
-  content_extracted_at?: string;
   url: string;
-  published: string;
+  published: string; // ISO 8601 date
   source: string;
   keywords: string[];
   image_url: string;
@@ -87,174 +36,270 @@ export interface Article {
   category: string;
   created_at: string;
   updated_at: string;
-  ai_enrichment?: AIEnrichment;
-  stock_data?: Record<string, StockQuote>;
+  content?: string; // Full content if extracted
+  content_extracted: boolean;
+  content_extracted_at?: string;
+  // AI fields - direct on Article now
+  ai_summary?: string;
+  ai_sentiment?: 'positive' | 'negative' | 'neutral';
+  ai_sentiment_score?: number;
+  ai_keywords?: string[];
+  ai_entities?: AIEntity[];
+  ai_category?: string;
+  stock_tickers?: string[];
+  ai_processed: boolean;
+  ai_processed_at?: string;
+  ai_error?: string;
 }
 
-export interface ArticleListResponse extends APIResponse<Article[]> { }
-
-export interface ArticleDetailResponse extends APIResponse<Article> { }
-
-// Source Types
-
-export interface SourceInfo {
-  name: string;
-  feed_url: string;
-  is_active: boolean;
-}
-
-export interface SourceListResponse extends APIResponse<SourceInfo[]> { }
-
-// Category Types
-
-export interface CategoryInfo {
-  name: string;
-  article_count: number;
-}
-
-export interface CategoryListResponse extends APIResponse<CategoryInfo[]> { }
-
-// Statistics Types
-
-export interface StatsResponse {
-  total_articles: number;
-  articles_by_source: Record<string, number>;
-  recent_articles_24h: number;
-  oldest_article?: string;
-  newest_article?: string;
-  categories: Record<string, CategoryInfo>;
-}
-
-export interface StatsAPIResponse extends APIResponse<StatsResponse> { }
-
-// Health Check Types
-
-export interface ComponentHealth {
-  status: 'healthy' | 'degraded' | 'unhealthy' | 'disabled';
-  message?: string;
-  latency_ms?: number;
-  details?: Record<string, any>;
-}
-
-export interface HealthResponse {
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  timestamp: string;
-  version: string;
-  uptime_seconds: number;
-  components: {
-    database: ComponentHealth;
-    redis: ComponentHealth;
-    scraper: ComponentHealth;
-    ai_processor?: ComponentHealth;
-  };
-  metrics: {
-    uptime_seconds: number;
-    timestamp: number;
-    db_total_conns?: number;
-    db_idle_conns?: number;
-    db_acquired_conns?: number;
-    ai_process_count?: number;
-    ai_is_running?: boolean;
-  };
-}
-
-export interface LivenessResponse {
-  status: 'alive';
-  time: string;
-}
-
-export interface ReadinessResponse {
-  status: 'ready' | 'not_ready';
-  components: Record<string, boolean>;
-  time: string;
-}
-
-export interface MetricsResponse {
-  timestamp: number;
-  uptime: number;
-  db_total_conns?: number;
-  db_idle_conns?: number;
-  db_acquired_conns?: number;
-  db_max_conns?: number;
-  db_acquire_count?: number;
-  db_acquire_duration_ms?: number;
-  ai_is_running?: boolean;
-  ai_process_count?: number;
-  ai_last_run?: number;
-  ai_current_interval_seconds?: number;
-  scraper?: {
-    total_scrapes: number;
-    successful_scrapes: number;
-    failed_scrapes: number;
-  };
-}
-
-export interface HealthAPIResponse extends APIResponse<HealthResponse> { }
-export interface LivenessAPIResponse extends APIResponse<LivenessResponse> { }
-export interface ReadinessAPIResponse extends APIResponse<ReadinessResponse> { }
-export interface MetricsAPIResponse extends APIResponse<MetricsResponse> { }
-
-// Scraper Types
-
-export interface ScrapeRequest {
-  source?: string;
-}
-
-export interface ScrapeResponse {
-  status: string;
+export interface ArticleCreate {
+  title: string;
+  summary: string;
+  url: string;
+  published: string;
   source: string;
-  articles_found: number;
-  articles_stored: number;
-  articles_skipped: number;
-  duration_seconds: number;
+  keywords?: string[];
+  image_url?: string;
+  author?: string;
+  category?: string;
 }
 
-export interface ScrapeAPIResponse extends APIResponse<ScrapeResponse> { }
-
-// Filter & Query Types
-
-export type SortBy = 'published' | 'created_at' | 'title';
-export type SortOrder = 'asc' | 'desc';
-
-export interface ArticleFilters {
-  limit?: number;
-  offset?: number;
+export interface ArticleFilter {
   source?: string;
   category?: string;
   keyword?: string;
+  search?: string;
   start_date?: string;
   end_date?: string;
-  sort_by?: SortBy;
-  sort_order?: SortOrder;
+  sort_by?: 'published' | 'created_at';
+  sort_order?: 'ASC' | 'DESC';
+  limit?: number;
+  offset?: number;
 }
 
-export interface SearchFilters extends ArticleFilters {
-  q: string;
+export interface ArticleListResponse {
+  articles: Article[];
+  pagination: PaginationResponse;
 }
 
-// Error Codes
-
-export enum ErrorCode {
-  INVALID_ID = 'INVALID_ID',
-  INVALID_DATE = 'INVALID_DATE',
-  INVALID_REQUEST = 'INVALID_REQUEST',
-  INVALID_SOURCE = 'INVALID_SOURCE',
-  NOT_FOUND = 'NOT_FOUND',
-  MISSING_QUERY = 'MISSING_QUERY',
-  DATABASE_ERROR = 'DATABASE_ERROR',
-  SEARCH_ERROR = 'SEARCH_ERROR',
-  SCRAPING_FAILED = 'SCRAPING_FAILED',
+export interface AIEntity {
+  entity: string;
+  entity_type: string;
+  relevance: number;
+  sentiment: number;
 }
 
-// Stock Ticker Types
+// ============================================================================
+// Analytics Types
+// ============================================================================
 
-export interface StockTicker {
-  symbol: string;        // "ASML", "AAPL", etc.
-  name?: string;         // "ASML Holding"
-  exchange?: string;     // "AEX", "NASDAQ"
-  mentions?: number;     // Times mentioned in article
-  context?: string;      // Context snippet
+export interface TrendingKeyword {
+  keyword: string;
+  article_count: number;
+  source_count: number;
+  sources: string[];
+  avg_sentiment: number;
+  avg_relevance: number;
+  most_recent: string;
+  trending_score: number;
 }
+
+export interface TrendingResponse {
+  trending: TrendingKeyword[];
+  meta: {
+    hours: number;
+    min_articles: number;
+    limit: number;
+    count: number;
+  };
+}
+
+export interface SentimentTrend {
+  day: string;
+  source: string;
+  total_articles: number;
+  positive_count: number;
+  neutral_count: number;
+  negative_count: number;
+  avg_sentiment: number;
+  positive_percentage: number;
+  negative_percentage: number;
+}
+
+export interface SentimentTrendsResponse {
+  trends: SentimentTrend[];
+  meta: {
+    source?: string;
+    count: number;
+  };
+}
+
+export interface HotEntity {
+  entity: string;
+  entity_type: string;
+  total_mentions: number;
+  days_mentioned: number;
+  sources: string[];
+  overall_sentiment: number;
+  most_recent_mention: string;
+}
+
+export interface HotEntitiesResponse {
+  entities: HotEntity[];
+  meta: {
+    entity_type?: string;
+    limit: number;
+    count: number;
+  };
+}
+
+export interface EntitySentimentDay {
+  day: string;
+  mention_count: number;
+  avg_sentiment: number;
+  sources: string[];
+  categories: string[];
+}
+
+export interface EntitySentimentResponse {
+  entity: string;
+  timeline: EntitySentimentDay[];
+  meta: {
+    days: number;
+    count: number;
+  };
+}
+
+export interface AnalyticsOverview {
+  trending_keywords: TrendingKeyword[];
+  hot_entities: HotEntity[];
+  materialized_views: Array<{
+    name: string;
+    size: string;
+  }>;
+  meta: {
+    trending_count: number;
+    entities_count: number;
+    views_count: number;
+  };
+}
+
+export interface ArticleSourceStats {
+  source: string;
+  source_name: string;
+  total_articles: number;
+  articles_today: number;
+  articles_week: number;
+  ai_processed_count: number;
+  content_extracted_count: number;
+  latest_article_date: string;
+  oldest_article_date: string;
+  avg_sentiment?: number;
+}
+
+export interface ArticleStatsResponse {
+  sources: ArticleSourceStats[];
+  meta: {
+    count: number;
+  };
+}
+
+// ============================================================================
+// Email Types
+// ============================================================================
+
+export interface Email {
+  id: number;
+  message_id: string;
+  message_uid?: string;
+  thread_id?: string;
+  sender: string;
+  sender_name?: string;
+  recipient?: string;
+  subject: string;
+  body_text: string;
+  body_html: string;
+  snippet?: string;
+  received_date: string;
+  sent_date?: string;
+  status: 'pending' | 'processing' | 'processed' | 'failed' | 'ignored' | 'spam';
+  processed_at?: string;
+  article_id?: number;
+  article_created: boolean;
+  error?: string;
+  error_code?: string;
+  retry_count: number;
+  max_retries: number;
+  last_retry_at?: string;
+  has_attachments: boolean;
+  attachment_count: number;
+  is_read: boolean;
+  is_flagged: boolean;
+  is_spam: boolean;
+  importance?: 'low' | 'normal' | 'high';
+  headers?: Record<string, any>;
+  labels?: string[];
+  size_bytes?: number;
+  spam_score?: number;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+}
+
+export interface EmailStats {
+  total_emails: number;
+  processed_emails: number;
+  pending_emails: number;
+  failed_emails: number;
+  articles_created: number;
+}
+
+// ============================================================================
+// Scraping Types
+// ============================================================================
+
+export interface ScrapingJob {
+  id: number;
+  job_uuid?: string;
+  source: string;
+  scraping_method?: 'rss' | 'dynamic' | 'hybrid';
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  started_at?: string;
+  completed_at?: string;
+  execution_time_ms?: number;
+  articles_found: number;
+  articles_new: number;
+  articles_updated: number;
+  articles_skipped: number;
+  error?: string;
+  error_code?: string;
+  retry_count: number;
+  max_retries: number;
+  created_at: string;
+  created_by?: string;
+}
+
+export interface ScraperStats {
+  articles_by_source: Record<string, number>;
+  rate_limit_delay: number;
+  sources_configured: string[];
+  circuit_breakers: Array<{
+    name: string;
+    state: 'closed' | 'open' | 'half-open';
+    failure_count: number;
+    success_count: number;
+  }>;
+  content_extraction?: {
+    total: number;
+    extracted: number;
+    pending: number;
+  };
+  browser_pool?: BrowserPoolStats;
+}
+
+// ============================================================================
+// Stock Types
+// ============================================================================
 
 export interface StockQuote {
   symbol: string;
@@ -263,10 +308,10 @@ export interface StockQuote {
   change: number;
   change_percent: number;
   volume: number;
-  market_cap?: number;
+  market_cap: number;
+  timestamp: string;
   exchange: string;
   currency: string;
-  last_updated: string;
   previous_close?: number;
   day_high?: number;
   day_low?: number;
@@ -279,7 +324,18 @@ export interface StockQuote {
   shares_outstanding?: number;
 }
 
-// Historical Price Data
+export interface StockProfile {
+  symbol: string;
+  company_name: string;
+  industry: string;
+  sector: string;
+  description: string;
+  ceo: string;
+  employees: number;
+  website: string;
+  country: string;
+}
+
 export interface HistoricalPrice {
   date: string;
   open: number;
@@ -300,7 +356,6 @@ export interface HistoricalDataResponse {
   prices: HistoricalPrice[];
 }
 
-// Financial Metrics
 export interface FinancialMetrics {
   symbol: string;
   marketCap: number;
@@ -308,8 +363,8 @@ export interface FinancialMetrics {
   pegRatio?: number;
   priceToBook?: number;
   priceToSales?: number;
-  roe?: number;  // Return on Equity
-  roa?: number;  // Return on Assets
+  roe?: number;
+  roa?: number;
   debtToEquity?: number;
   currentRatio?: number;
   dividendYield?: number;
@@ -318,7 +373,6 @@ export interface FinancialMetrics {
   freeCashFlowYield?: number;
 }
 
-// Stock News
 export interface StockNewsItem {
   symbol: string;
   publishedDate: string;
@@ -335,13 +389,12 @@ export interface StockNewsResponse {
   news: StockNewsItem[];
 }
 
-// Earnings Calendar
 export interface EarningsEvent {
   symbol: string;
   date: string;
   eps: number;
   epsEstimated: number;
-  time: 'bmo' | 'amc' | 'tbd';  // before market open, after market close, to be determined
+  time: 'bmo' | 'amc' | 'tbd';
   revenue: number;
   revenueEstimated: number;
 }
@@ -353,14 +406,10 @@ export interface EarningsCalendarResponse {
   earnings: EarningsEvent[];
 }
 
-// Symbol Search
 export interface SymbolSearchResult {
   symbol: string;
-  company_name: string;
-  currency: string;
+  name: string;
   exchange: string;
-  exchangeShortName?: string;
-  stockExchange?: string;
 }
 
 export interface SymbolSearchResponse {
@@ -369,19 +418,6 @@ export interface SymbolSearchResponse {
   results: SymbolSearchResult[];
 }
 
-// Batch Quotes Response with Meta
-export interface BatchQuotesResponse {
-  quotes: Record<string, StockQuote>;
-  meta: {
-    total: number;
-    requested: number;
-    duration_ms: number;
-    using_batch: boolean;
-    cost_saving?: string;
-  };
-}
-
-// Market Performance Types
 export interface MarketMover {
   symbol: string;
   name: string;
@@ -408,7 +444,6 @@ export interface SectorsResponse {
   total: number;
 }
 
-// Analyst Ratings Types
 export interface AnalystRating {
   date: string;
   analystName?: string;
@@ -436,62 +471,198 @@ export interface PriceTarget {
   numberOfAnalysts?: number;
 }
 
-// Stock Stats
-export interface StockStatsResponse {
-  cache: {
-    enabled: boolean;
-    ttl: string;
-    cached_quotes: number;
-    cached_profiles: number;
+// ============================================================================
+// Health Types
+// ============================================================================
+
+export interface HealthStatus {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  timestamp: string;
+  services: {
+    database: 'up' | 'down';
+    redis: 'up' | 'down';
+    scraper: 'up' | 'down';
+    ai_processor: 'up' | 'down';
+  };
+  metrics?: {
+    cpu_usage?: number;
+    memory_usage?: number;
+    goroutines?: number;
   };
 }
 
-export interface StockProfile {
-  symbol: string;
-  company_name: string;
-  currency: string;
-  exchange: string;
-  industry?: string;
-  sector?: string;
-  website?: string;
-  description?: string;
-  ceo?: string;
-  country?: string;
-  ipo_date?: string;
+// ============================================================================
+// Cache Types
+// ============================================================================
+
+export interface CacheStats {
+  hits: number;
+  misses: number;
+  hit_rate: number;
+  keys_count: number;
+  memory_usage: string;
 }
 
-// AI Enrichment Types
+export interface CacheInvalidateRequest {
+  pattern?: string;
+}
 
+export interface CacheInvalidateResponse {
+  message: string;
+  keys_deleted: number;
+}
+
+// ============================================================================
+// AI Types (Legacy support & Chat)
+// ============================================================================
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+}
+
+export interface ChatRequest {
+  message: string;
+  conversation_id?: string;
+}
+
+export interface ChatResponse {
+  response: string;
+  conversation_id: string;
+  tokens_used: number;
+}
+
+// ============================================================================
+// Legacy Types (for backward compatibility)
+// ============================================================================
+
+// Keep old API wrapper for backward compatibility during migration
+export interface APIResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: APIError;
+  request_id: string;
+  timestamp: string;
+  rateLimitHeaders?: RateLimitHeaders;
+}
+
+export interface APIError {
+  code: string;
+  message: string;
+  details?: string;
+}
+
+export interface RateLimitHeaders {
+  limit: number;
+  remaining: number;
+  reset: number;
+}
+
+// ============================================================================
+// Source & Category Types
+// ============================================================================
+
+export interface SourceInfo {
+  name: string;
+  url: string;
+  active: boolean;
+}
+
+export interface CategoryInfo {
+  name: string;
+  article_count: number;
+}
+
+// ============================================================================
+// Search Types
+// ============================================================================
+
+export interface SearchFilters extends ArticleFilter {
+  q: string;
+}
+
+// ============================================================================
+// Stats Types
+// ============================================================================
+
+export interface StatsResponse {
+  total_articles: number;
+  articles_by_source: Record<string, number>;
+  recent_articles_24h: number;
+  oldest_article?: string;
+  newest_article?: string;
+  categories: Record<string, CategoryInfo>;
+}
+
+// ============================================================================
+// Scraper Request/Response
+// ============================================================================
+
+export interface ScrapeRequest {
+  sources?: string[];
+}
+
+export interface ScrapeResponse {
+  message: string;
+  results: Record<string, {
+    source: string;
+    articles_stored: number;
+    articles_skipped: number;
+    duration: string;
+    status: string;
+    error?: string;
+  }>;
+}
+
+// ============================================================================
+// Error Codes
+// ============================================================================
+
+export enum ErrorCode {
+  INVALID_ID = 'INVALID_ID',
+  INVALID_DATE = 'INVALID_DATE',
+  INVALID_REQUEST = 'INVALID_REQUEST',
+  INVALID_SOURCE = 'INVALID_SOURCE',
+  NOT_FOUND = 'NOT_FOUND',
+  MISSING_QUERY = 'MISSING_QUERY',
+  DATABASE_ERROR = 'DATABASE_ERROR',
+  SEARCH_ERROR = 'SEARCH_ERROR',
+  SCRAPING_FAILED = 'SCRAPING_FAILED',
+}
+
+// ============================================================================
+// Alias types for compatibility
+// ============================================================================
+
+export type ArticleFilters = ArticleFilter;
+export type SortBy = 'published' | 'created_at' | 'title';
+export type SortOrder = 'asc' | 'desc' | 'ASC' | 'DESC';
+
+// Legacy AI types
 export interface AIEnrichment {
   processed: boolean;
   processed_at?: string;
-  sentiment?: SentimentAnalysis;
+  sentiment?: {
+    score: number;
+    label: 'positive' | 'negative' | 'neutral';
+    confidence?: number;
+  };
   categories?: Record<string, number>;
-  entities?: EntityExtraction;
-  keywords?: Keyword[];
+  entities?: {
+    persons?: string[];
+    organizations?: string[];
+    locations?: string[];
+    stock_tickers?: string[];
+  };
+  keywords?: Array<{
+    word: string;
+    score: number;
+  }>;
   summary?: string;
   error?: string;
 }
 
-export interface SentimentAnalysis {
-  score: number;        // -1.0 (very negative) to 1.0 (very positive)
-  label: 'positive' | 'negative' | 'neutral';
-  confidence?: number;  // 0.0 to 1.0
-}
-
-export interface EntityExtraction {
-  persons?: string[];
-  organizations?: string[];
-  locations?: string[];
-  stock_tickers?: StockTicker[];
-}
-
-export interface Keyword {
-  word: string;
-  score: number;  // 0.0 to 1.0 (relevance)
-}
-
-// Sentiment Statistics
 export interface SentimentStats {
   total_articles: number;
   positive_count: number;
@@ -502,9 +673,6 @@ export interface SentimentStats {
   most_negative_title?: string;
 }
 
-export interface SentimentStatsResponse extends APIResponse<SentimentStats> { }
-
-// Trending Topics
 export interface TrendingTopic {
   keyword: string;
   article_count: number;
@@ -519,51 +687,76 @@ export interface TrendingTopicsResponse {
   count: number;
 }
 
-export interface TrendingTopicsAPIResponse extends APIResponse<TrendingTopicsResponse> { }
-
-// Processor Status
 export interface ProcessorStats {
   is_running: boolean;
   process_count: number;
   last_run: string;
 }
 
-export interface ProcessorStatsResponse extends APIResponse<ProcessorStats> { }
-
-// Extended Article with AI data
-export interface ArticleWithAI extends Article {
-  ai_enrichment?: AIEnrichment;
+// Response types for specific endpoints
+export interface LivenessResponse {
+  status: 'alive' | 'ok';
+  time?: string;
 }
 
-// AI API Response Types
-export interface ArticleEnrichmentResponse extends APIResponse<AIEnrichment> { }
-
-export interface ArticlesByEntityResponse extends APIResponse<Article[]> { }
-
-export interface ProcessArticleResponse extends APIResponse<{
-  message: string;
-  article_id: number;
-  enrichment: AIEnrichment;
-}> { }
-
-export interface BatchProcessResponse extends APIResponse<{
-  message: string;
-  total_processed: number;
-  success_count: number;
-  failure_count: number;
-  duration: string;
-}> { }
-
-// Rate Limiting
-
-export interface RateLimitHeaders {
-  limit: number;
-  remaining: number;
-  reset: number;
+export interface ReadinessResponse {
+  status: 'ready' | 'not_ready';
+  components?: {
+    database: boolean;
+    redis: boolean;
+  };
+  time?: string;
 }
 
-// Content Extraction Types (for Browser Scraping Integration)
+export interface MetricsResponse {
+  timestamp?: number;
+  uptime: number;
+  requests_total?: number;
+  requests_per_second?: number;
+  avg_response_time_ms?: number;
+  error_rate?: number;
+  db_total_conns?: number;
+  db_idle_conns?: number;
+  db_acquired_conns?: number;
+  db_max_conns?: number;
+  db_acquire_duration_ms?: number;
+  ai_is_running?: boolean;
+  ai_process_count?: number;
+  ai_last_run?: number;
+  ai_current_interval_seconds?: number;
+  scraper?: {
+    total_scrapes: number;
+    successful_scrapes: number;
+    failed_scrapes?: number;
+  };
+}
 
+export interface EmailFetchResponse {
+  message: string;
+  count: number;
+}
+
+export interface StockStatsResponse {
+  cache: {
+    enabled: boolean;
+    ttl: string;
+    cached_quotes: number;
+    cached_profiles: number;
+  };
+}
+
+export interface BatchQuotesResponse {
+  quotes: Record<string, StockQuote>;
+  meta: {
+    total: number;
+    requested: number;
+    duration_ms: number;
+    using_batch: boolean;
+    cost_saving?: string;
+  };
+}
+
+// Content Extraction
 export interface ContentExtractionResponse {
   message: string;
   characters: number;
@@ -598,43 +791,41 @@ export interface ScraperStatsResponse {
   browser_pool?: BrowserPoolStats;
 }
 
-export interface ArticleStatsExtended extends StatsResponse {
-  total_articles: number;
-  recent_articles: number;
-  articles_by_source: Record<string, number>;
-  categories: Record<string, CategoryInfo>;
-  oldest_article?: string;
-  newest_article?: string;
+// Health check types
+export interface ComponentHealth {
+  status: 'healthy' | 'degraded' | 'unhealthy' | 'disabled';
+  message?: string;
+  latency_ms?: number;
+  details?: Record<string, any>;
 }
 
-// AI Chat Types
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp?: string;
-}
-
-export interface ChatRequest {
-  message: string;
-  article_id?: number;
-  article_content?: string;  // Volledige artikel content als string
-  context?: string;  // Conversatie context
-}
-
-export interface ChatResponse {
-  message: string;
-  articles?: Article[];
-  stats?: {
-    total_articles?: number;
-    sentiment_breakdown?: {
-      positive: number;
-      neutral: number;
-      negative: number;
-    };
-    sources?: string[];
+export interface HealthResponse {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  timestamp: string;
+  version: string;
+  uptime_seconds: number;
+  components: {
+    database: ComponentHealth;
+    redis: ComponentHealth;
+    scraper: ComponentHealth;
+    ai_processor?: ComponentHealth;
   };
-  function_used?: string;
-  tokens_used?: number;
+  metrics?: {
+    uptime_seconds: number;
+    timestamp?: number;
+    db_total_conns?: number;
+    db_idle_conns?: number;
+    db_acquired_conns?: number;
+    ai_process_count?: number;
+    ai_is_running?: boolean;
+  };
 }
 
-export interface ChatAPIResponse extends APIResponse<ChatResponse> { }
+// Stock ticker type (legacy)
+export interface StockTicker {
+  symbol: string;
+  name?: string;
+  exchange?: string;
+  mentions?: number;
+  context?: string;
+}

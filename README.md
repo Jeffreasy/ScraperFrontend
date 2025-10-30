@@ -127,7 +127,7 @@ Volledige GitHub-style documentatie in [`docs/`](docs/):
 
 ### 🚀 Getting Started
 - ⚡ [Snelstart Gids](docs/getting-started/QUICKSTART.md) - Begin in 5 minuten
-- 📖 [README Overview](docs/README.md) - Documentatie index
+- 📖 [Documentatie Index](docs/README.md) - Complete overzicht
 
 ### 💻 Development
 - 📝 [Development Guide](docs/development/DEVELOPMENT.md) - Complete dev gids
@@ -139,12 +139,15 @@ Volledige GitHub-style documentatie in [`docs/`](docs/):
 - 🖌️ [Component Styling](docs/styling/COMPONENT-STYLING.md) - Styling richtlijnen
 - ✨ [Styling Optimizations](docs/styling/STYLING-OPTIMIZATIONS.md) - CVA, dark mode, utilities
 
-### 🔌 API Integration
-- 🤖 [AI Integration](docs/AI_INTEGRATION.md) - AI features guide
+### 🔌 API & Features
+- 📡 [Complete API Reference](docs/api/API-REFERENCE.md) - Alle endpoints & voorbeelden
 - 📡 [Advanced API](docs/api/ADVANCED-API.md) - Advanced patterns & monitoring
+- ✨ [Article Enhancements](docs/features/ARTICLE-ENHANCEMENTS.md) - Article card features
+- 📈 [Stock Integration](docs/features/STOCK-INTEGRATION-COMPLETE.md) - Stock features
+- 🤖 [AI Integration](docs/AI_INTEGRATION.md) - AI features guide
 - 🌐 [Browser Scraping](docs/BROWSER_SCRAPING_INTEGRATION.md) - Hybrid scraping
 
-### 📖 Guides
+### 📖 Implementation Guides
 - 🚀 [Implementation Guide](docs/guides/IMPLEMENTATION_GUIDE.md) - Feature implementation
 - 📊 [Monitoring Guide](docs/guides/MONITORING_GUIDE.md) - Dashboard & metrics
 - 📊 [Monitoring Dashboard](docs/MONITORING_DASHBOARD.md) - Dashboard details
@@ -152,6 +155,8 @@ Volledige GitHub-style documentatie in [`docs/`](docs/):
 ### 🔧 Troubleshooting
 - 🐛 [Troubleshooting](docs/troubleshooting/TROUBLESHOOTING.md) - Common issues
 - 💻 [VSCode Fix](docs/troubleshooting/VSCODE-FIX.md) - TypeScript errors
+- 📊 [No Data Fix](docs/troubleshooting/NO-DATA.md) - Data loading problemen
+- 💡 [Sentiment Fix](docs/troubleshooting/SENTIMENT-FIX.md) - Sentiment dashboard
 
 ## 🛠️ Tech Stack
 
@@ -403,7 +408,8 @@ PostgreSQL Database + Redis Cache
 ### API Documentatie
 
 Voor volledige API documentatie:
-- **Frontend Integration**: [Advanced API Guide](docs/api/ADVANCED-API.md)
+- **Complete API Reference**: [API Reference](docs/api/API-REFERENCE.md) - Alle endpoints
+- **Advanced Patterns**: [Advanced API Guide](docs/api/ADVANCED-API.md)
 - **Backend API Docs**: Zie backend repository
 - **Health Monitoring**: [Monitoring Guide](docs/guides/MONITORING_GUIDE.md)
 
@@ -460,6 +466,6 @@ Dit project is gelicenseerd onder de MIT License - zie [LICENSE](LICENSE) voor d
 
 **Gemaakt met ❤️ voor Nederlands nieuws**
 
-[Documentatie](docs/) · [Design System](docs/styling/DESIGN-SYSTEM.md) · [API Guide](docs/api/ADVANCED-API.md)
+[Documentatie](docs/) · [API Reference](docs/api/API-REFERENCE.md) · [Design System](docs/styling/DESIGN-SYSTEM.md)
 
 </div>

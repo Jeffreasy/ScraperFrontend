@@ -182,9 +182,13 @@ function AIProcessorMetrics({ metrics }: { metrics: MetricsResponse }) {
     );
 }
 
-function ScraperMetrics({ scraper }: { scraper: any }) {
-    const successRate = scraper.total_scrapes > 0
-        ? ((scraper.successful_scrapes / scraper.total_scrapes) * 100).toFixed(1)
+function ScraperMetrics({ scraper }: { scraper: { total_scrapes?: number; successful_scrapes?: number; failed_scrapes?: number } }) {
+    const totalScrapes = scraper.total_scrapes ?? 0;
+    const successfulScrapes = scraper.successful_scrapes ?? 0;
+    const failedScrapes = scraper.failed_scrapes ?? (totalScrapes - successfulScrapes);
+
+    const successRate = totalScrapes > 0
+        ? ((successfulScrapes / totalScrapes) * 100).toFixed(1)
         : '0';
 
     return (
@@ -196,20 +200,25 @@ function ScraperMetrics({ scraper }: { scraper: any }) {
                 <h4 className="font-semibold text-foreground">Scraper</h4>
             </div>
             <div className={cn(spacing.xs, bodyText.small)}>
-                <MetricRow label="Totaal scrapes" value={scraper.total_scrapes} />
+                <MetricRow label="Totaal scrapes" value={totalScrapes.toLocaleString('nl-NL')} />
                 <div className={flexPatterns.between}>
                     <span className="text-muted-foreground">Succesvol:</span>
                     <span className="font-medium text-green-600 dark:text-green-400">
-                        {scraper.successful_scrapes}
+                        {successfulScrapes.toLocaleString('nl-NL')}
                     </span>
                 </div>
                 <div className={flexPatterns.between}>
                     <span className="text-muted-foreground">Mislukt:</span>
                     <span className="font-medium text-red-600 dark:text-red-400">
-                        {scraper.failed_scrapes}
+                        {failedScrapes.toLocaleString('nl-NL')}
                     </span>
                 </div>
-                <MetricRow label="Successpercentage" value={`${successRate}%`} />
+                <div className={flexPatterns.between}>
+                    <span className="text-muted-foreground">Successpercentage:</span>
+                    <span className={cn('font-medium', parseFloat(successRate) >= 95 ? 'text-green-600 dark:text-green-400' : parseFloat(successRate) >= 80 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400')}>
+                        {successRate}%
+                    </span>
+                </div>
             </div>
         </Card>
     );
@@ -225,8 +234,35 @@ function SystemMetrics({ metrics }: { metrics: MetricsResponse }) {
                 <h4 className="font-semibold text-foreground">Systeem</h4>
             </div>
             <div className={cn(spacing.xs, bodyText.small)}>
+                {/* Uptime */}
                 <MetricRow label="Uptime" value={formatDuration(metrics.uptime)} />
-                <MetricRow label="Timestamp" value={formatTimestamp(metrics.timestamp)} />
+
+                {/* Timestamp */}
+                {metrics.timestamp !== undefined && (
+                    <MetricRow label="Timestamp" value={formatTimestamp(metrics.timestamp)} />
+                )}
+
+                {/* Request Metrics */}
+                {metrics.requests_total !== undefined && (
+                    <MetricRow label="Totale requests" value={metrics.requests_total.toLocaleString('nl-NL')} />
+                )}
+
+                {metrics.requests_per_second !== undefined && (
+                    <MetricRow label="Requests/sec" value={metrics.requests_per_second.toFixed(2)} />
+                )}
+
+                {metrics.avg_response_time_ms !== undefined && (
+                    <MetricRow label="Gem. response tijd" value={`${metrics.avg_response_time_ms.toFixed(1)}ms`} />
+                )}
+
+                {metrics.error_rate !== undefined && (
+                    <div className={flexPatterns.between}>
+                        <span className="text-muted-foreground">Error rate:</span>
+                        <span className={cn('font-medium', metrics.error_rate > 0.05 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
+                            {(metrics.error_rate * 100).toFixed(2)}%
+                        </span>
+                    </div>
+                )}
             </div>
         </Card>
     );

@@ -6,8 +6,90 @@ import { MarketMoversResponse, SectorsResponse } from '@/lib/types/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import {
+    cn,
+    cardStyles,
+    spacing,
+    padding,
+    transitions,
+    getSentimentColor,
+    flexPatterns,
+    gap,
+    bodyText,
+    gridLayouts,
+} from '@/lib/styles/theme';
 
-export function MarketOverview() {
+interface MarketOverviewProps {
+    variant?: 'default' | 'compact';
+}
+
+// ============================================================================
+// COMPONENT VARIANTS
+// ============================================================================
+
+const marketOverviewVariants = cva(
+    ['transition-all duration-200'],
+    {
+        variants: {
+            variant: {
+                default: '',
+                compact: 'border-muted',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+const marketCardVariants = cva(
+    ['transition-all duration-200'],
+    {
+        variants: {
+            variant: {
+                default: '',
+                compact: 'border-muted',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+const stockItemVariants = cva(
+    ['flex items-center justify-between rounded', transitions.colors],
+    {
+        variants: {
+            variant: {
+                default: 'p-2 hover:bg-accent/50',
+                compact: 'p-1.5 hover:bg-accent/30',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+const sectorItemVariants = cva(
+    ['flex items-center justify-between rounded', transitions.colors],
+    {
+        variants: {
+            variant: {
+                default: 'p-2 hover:bg-accent/50',
+                compact: 'p-1.5 hover:bg-accent/30',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+export function MarketOverview({ variant = 'default' }: MarketOverviewProps) {
+    const isCompact = variant === 'compact';
     const [gainers, setGainers] = useState<MarketMoversResponse | null>(null);
     const [losers, setLosers] = useState<MarketMoversResponse | null>(null);
     const [actives, setActives] = useState<MarketMoversResponse | null>(null);
@@ -29,10 +111,11 @@ export function MarketOverview() {
                     apiClient.getSectors()
                 ]);
 
-                if (gainersData.success && gainersData.data) setGainers(gainersData.data);
-                if (losersData.success && losersData.data) setLosers(losersData.data);
-                if (activesData.success && activesData.data) setActives(activesData.data);
-                if (sectorsData.success && sectorsData.data) setSectors(sectorsData.data);
+                // Direct responses now, no wrapper
+                setGainers(gainersData);
+                setLosers(losersData);
+                setActives(activesData);
+                setSectors(sectorsData);
             } catch (err) {
                 setError(err instanceof Error ? err : new Error('Failed to load market data'));
             } finally {
@@ -49,16 +132,16 @@ export function MarketOverview() {
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className={cn(gridLayouts.fourColumn, gap.lg)}>
                 {[...Array(4)].map((_, i) => (
-                    <Card key={i}>
-                        <CardHeader>
-                            <Skeleton className="h-6 w-32" />
+                    <Card key={i} variant="default" hover="lift" className={marketCardVariants({ variant })}>
+                        <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : padding.md)}>
+                            <Skeleton className={cn(isCompact ? 'h-4 w-24' : 'h-6 w-32')} />
                         </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                {[...Array(5)].map((_, j) => (
-                                    <Skeleton key={j} className="h-12 w-full" />
+                        <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                            <div className={cn(isCompact ? spacing.xs : spacing.md)}>
+                                {[...Array(isCompact ? 3 : 5)].map((_, j) => (
+                                    <Skeleton key={j} className={cn(isCompact ? 'h-8 w-full' : 'h-12 w-full')} />
                                 ))}
                             </div>
                         </CardContent>
@@ -70,42 +153,42 @@ export function MarketOverview() {
 
     if (error) {
         return (
-            <Card className="border-destructive/50">
-                <CardContent className="pt-6">
-                    <p className="text-sm text-muted-foreground">{error.message}</p>
+            <Card variant="default" hover="lift" className={cn(marketCardVariants({ variant }), 'border-destructive/50')}>
+                <CardContent className={cn(isCompact ? 'px-4 py-4' : 'pt-6')}>
+                    <p className={cn(bodyText.small, 'text-muted-foreground')}>{error.message}</p>
                 </CardContent>
             </Card>
         );
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className={cn(gridLayouts.fourColumn, gap.lg)}>
             {/* Top Gainers */}
-            <Card>
-                <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-green-600 dark:text-green-400">
+            <Card variant="default" hover="lift" className={marketCardVariants({ variant })}>
+                <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : 'pb-3')}>
+                    <CardTitle className={cn(flexPatterns.start, gap.sm, isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold', getSentimentColor('positive').split(' ')[1])}>
                         <TrendingUp className="w-5 h-5" />
                         Top Gainers
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        {gainers?.gainers?.slice(0, 5).map((stock) => (
+                <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                    <div className={cn(isCompact ? spacing.xs : spacing.sm)}>
+                        {gainers?.gainers?.slice(0, isCompact ? 3 : 5).map((stock) => (
                             <div
                                 key={stock.symbol}
-                                className="flex items-center justify-between p-2 rounded hover:bg-accent/50 transition-colors"
+                                className={stockItemVariants({ variant })}
                             >
                                 <div className="flex-1">
-                                    <div className="font-bold text-sm">{stock.symbol}</div>
-                                    <div className="text-xs text-muted-foreground truncate">
-                                        {stock.name}
+                                    <div className={cn(isCompact ? 'font-semibold text-xs' : 'font-bold text-sm')}>{stock.symbol}</div>
+                                    <div className={cn(bodyText.xs, 'text-muted-foreground truncate')}>
+                                        {isCompact ? stock.symbol : stock.name}
                                     </div>
                                 </div>
                                 <div className="text-right ml-2">
-                                    <div className="font-semibold text-sm">
+                                    <div className={cn(isCompact ? 'font-medium text-xs' : 'font-semibold text-sm')}>
                                         ${stock.price.toFixed(2)}
                                     </div>
-                                    <div className="text-xs text-green-600 dark:text-green-400 font-medium">
+                                    <div className={cn(bodyText.xs, 'font-medium', getSentimentColor('positive').split(' ')[1])}>
                                         +{stock.changePercent.toFixed(2)}%
                                     </div>
                                 </div>
@@ -116,31 +199,31 @@ export function MarketOverview() {
             </Card>
 
             {/* Top Losers */}
-            <Card>
-                <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
+            <Card variant="default" hover="lift" className={marketCardVariants({ variant })}>
+                <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : 'pb-3')}>
+                    <CardTitle className={cn(flexPatterns.start, gap.sm, isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold', getSentimentColor('negative').split(' ')[1])}>
                         <TrendingDown className="w-5 h-5" />
                         Top Losers
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        {losers?.losers?.slice(0, 5).map((stock) => (
+                <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                    <div className={cn(isCompact ? spacing.xs : spacing.sm)}>
+                        {losers?.losers?.slice(0, isCompact ? 3 : 5).map((stock) => (
                             <div
                                 key={stock.symbol}
-                                className="flex items-center justify-between p-2 rounded hover:bg-accent/50 transition-colors"
+                                className={stockItemVariants({ variant })}
                             >
                                 <div className="flex-1">
-                                    <div className="font-bold text-sm">{stock.symbol}</div>
-                                    <div className="text-xs text-muted-foreground truncate">
-                                        {stock.name}
+                                    <div className={cn(isCompact ? 'font-semibold text-xs' : 'font-bold text-sm')}>{stock.symbol}</div>
+                                    <div className={cn(bodyText.xs, 'text-muted-foreground truncate')}>
+                                        {isCompact ? stock.symbol : stock.name}
                                     </div>
                                 </div>
                                 <div className="text-right ml-2">
-                                    <div className="font-semibold text-sm">
+                                    <div className={cn(isCompact ? 'font-medium text-xs' : 'font-semibold text-sm')}>
                                         ${stock.price.toFixed(2)}
                                     </div>
-                                    <div className="text-xs text-red-600 dark:text-red-400 font-medium">
+                                    <div className={cn(bodyText.xs, 'font-medium', getSentimentColor('negative').split(' ')[1])}>
                                         {stock.changePercent.toFixed(2)}%
                                     </div>
                                 </div>
@@ -151,34 +234,34 @@ export function MarketOverview() {
             </Card>
 
             {/* Most Active */}
-            <Card>
-                <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2">
+            <Card variant="default" hover="lift" className={marketCardVariants({ variant })}>
+                <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : 'pb-3')}>
+                    <CardTitle className={cn(flexPatterns.start, gap.sm, isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold')}>
                         <Activity className="w-5 h-5" />
                         Most Active
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        {actives?.actives?.slice(0, 5).map((stock) => (
+                <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                    <div className={cn(isCompact ? spacing.xs : spacing.sm)}>
+                        {actives?.actives?.slice(0, isCompact ? 3 : 5).map((stock) => (
                             <div
                                 key={stock.symbol}
-                                className="flex items-center justify-between p-2 rounded hover:bg-accent/50 transition-colors"
+                                className={stockItemVariants({ variant })}
                             >
                                 <div className="flex-1">
-                                    <div className="font-bold text-sm">{stock.symbol}</div>
-                                    <div className="text-xs text-muted-foreground">
+                                    <div className={cn(isCompact ? 'font-semibold text-xs' : 'font-bold text-sm')}>{stock.symbol}</div>
+                                    <div className={cn(bodyText.xs, 'text-muted-foreground')}>
                                         Vol: {(stock.volume / 1000000).toFixed(1)}M
                                     </div>
                                 </div>
                                 <div className="text-right ml-2">
-                                    <div className="font-semibold text-sm">
+                                    <div className={cn(isCompact ? 'font-medium text-xs' : 'font-semibold text-sm')}>
                                         ${stock.price.toFixed(2)}
                                     </div>
-                                    <div className={`text-xs font-medium ${stock.changePercent >= 0
-                                            ? 'text-green-600 dark:text-green-400'
-                                            : 'text-red-600 dark:text-red-400'
-                                        }`}>
+                                    <div className={cn(bodyText.xs, 'font-medium', stock.changePercent >= 0
+                                        ? getSentimentColor('positive').split(' ')[1]
+                                        : getSentimentColor('negative').split(' ')[1]
+                                    )}>
                                         {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
                                     </div>
                                 </div>
@@ -189,26 +272,28 @@ export function MarketOverview() {
             </Card>
 
             {/* Sector Performance */}
-            <Card>
-                <CardHeader className="pb-3">
-                    <CardTitle>Sector Performance</CardTitle>
+            <Card variant="default" hover="lift" className={marketCardVariants({ variant })}>
+                <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : 'pb-3')}>
+                    <CardTitle className={cn(isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold')}>
+                        Sector Performance
+                    </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        {sectors?.sectors?.slice(0, 10).map((sector) => (
+                <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                    <div className={cn(isCompact ? spacing.xs : spacing.sm)}>
+                        {sectors?.sectors?.slice(0, isCompact ? 6 : 10).map((sector) => (
                             <div
                                 key={sector.sector}
-                                className="flex items-center justify-between p-2 rounded hover:bg-accent/50 transition-colors"
+                                className={sectorItemVariants({ variant })}
                             >
                                 <div className="flex-1">
-                                    <div className="text-sm font-medium truncate">
+                                    <div className={cn(isCompact ? 'text-xs font-medium' : 'text-sm font-medium', 'truncate')}>
                                         {sector.sector}
                                     </div>
                                 </div>
-                                <div className={`text-sm font-semibold ml-2 ${sector.changePercent >= 0
-                                        ? 'text-green-600 dark:text-green-400'
-                                        : 'text-red-600 dark:text-red-400'
-                                    }`}>
+                                <div className={cn(isCompact ? 'text-xs font-semibold' : 'text-sm font-semibold', 'ml-2', sector.changePercent >= 0
+                                    ? getSentimentColor('positive').split(' ')[1]
+                                    : getSentimentColor('negative').split(' ')[1]
+                                )}>
                                     {sector.changePercent >= 0 ? '+' : ''}{sector.changePercent.toFixed(2)}%
                                 </div>
                             </div>

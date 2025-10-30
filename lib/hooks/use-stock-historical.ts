@@ -1,49 +1,73 @@
-import { useState, useEffect } from 'react';
-import { HistoricalDataResponse } from '@/lib/types/api';
+import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
+import type { HistoricalDataResponse } from '@/lib/types/api';
 
-interface UseStockHistoricalResult {
-    data: HistoricalDataResponse | null;
-    loading: boolean;
-    error: Error | null;
-    refetch: () => void;
+/**
+ * Hook voor het ophalen van historische stock data
+ */
+export function useStockHistorical(
+    symbol: string,
+    options: {
+        from?: string;
+        to?: string;
+        enabled?: boolean;
+    } = {}
+) {
+    const { from, to, enabled = true } = options;
+
+    return useQuery({
+        queryKey: ['stock', 'historical', symbol, from, to],
+        queryFn: async () => {
+            return await apiClient.getHistoricalData(symbol, from, to);
+        },
+        enabled: enabled && !!symbol && symbol.length > 0,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 15 * 60 * 1000, // 15 minutes
+    });
 }
 
-export function useStockHistorical(
-    symbol: string | null,
-    from?: string,
-    to?: string
-): UseStockHistoricalResult {
-    const [data, setData] = useState<HistoricalDataResponse | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<Error | null>(null);
+/**
+ * Hook voor mini chart data (laatste 7 dagen)
+ */
+export function useStockMiniChart(symbol: string, enabled: boolean = true) {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const fetchData = async () => {
-        if (!symbol) {
-            setData(null);
-            return;
-        }
+    const from = sevenDaysAgo.toISOString().split('T')[0];
+    const to = new Date().toISOString().split('T')[0];
 
-        setLoading(true);
-        setError(null);
+    return useStockHistorical(symbol, { from, to, enabled });
+}
 
-        try {
-            const response = await apiClient.getHistoricalData(symbol, from, to);
-            if (response.success && response.data) {
-                setData(response.data);
-            } else {
-                throw new Error(response.error?.message || 'Failed to fetch historical data');
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err : new Error('Unknown error'));
-        } finally {
-            setLoading(false);
-        }
+/**
+ * Hook voor het berekenen van price change percentage
+ */
+export function useStockPriceChange(symbol: string) {
+    const { data, isLoading, error } = useStockMiniChart(symbol);
+
+    if (!data || !data.prices || data.prices.length < 2) {
+        return {
+            changePercent: 0,
+            change: 0,
+            isPositive: true,
+            isLoading,
+            error,
+        };
+    }
+
+    const firstPrice = data.prices[0].close;
+    const lastPrice = data.prices[data.prices.length - 1].close;
+    const change = lastPrice - firstPrice;
+    const changePercent = (change / firstPrice) * 100;
+
+    return {
+        changePercent,
+        change,
+        isPositive: change >= 0,
+        firstPrice,
+        lastPrice,
+        isLoading,
+        error,
+        prices: data.prices,
     };
-
-    useEffect(() => {
-        fetchData();
-    }, [symbol, from, to]);
-
-    return { data, loading, error, refetch: fetchData };
 }

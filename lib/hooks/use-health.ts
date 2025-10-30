@@ -7,7 +7,6 @@ import type {
     LivenessResponse,
     ReadinessResponse,
     MetricsResponse,
-    APIResponse
 } from '@/lib/types/api';
 
 // ============================================
@@ -15,7 +14,7 @@ import type {
 // ============================================
 
 export const useHealth = (
-    options?: Omit<UseQueryOptions<APIResponse<HealthResponse>>, 'queryKey' | 'queryFn'>
+    options?: Omit<UseQueryOptions<HealthResponse>, 'queryKey' | 'queryFn'>
 ) => {
     return useQuery({
         queryKey: ['health'],
@@ -32,7 +31,7 @@ export const useHealth = (
 // ============================================
 
 export const useLiveness = (
-    options?: Omit<UseQueryOptions<APIResponse<LivenessResponse>>, 'queryKey' | 'queryFn'>
+    options?: Omit<UseQueryOptions<LivenessResponse>, 'queryKey' | 'queryFn'>
 ) => {
     return useQuery({
         queryKey: ['health', 'liveness'],
@@ -49,7 +48,7 @@ export const useLiveness = (
 // ============================================
 
 export const useReadiness = (
-    options?: Omit<UseQueryOptions<APIResponse<ReadinessResponse>>, 'queryKey' | 'queryFn'>
+    options?: Omit<UseQueryOptions<ReadinessResponse>, 'queryKey' | 'queryFn'>
 ) => {
     return useQuery({
         queryKey: ['health', 'readiness'],
@@ -66,7 +65,7 @@ export const useReadiness = (
 // ============================================
 
 export const useMetrics = (
-    options?: Omit<UseQueryOptions<APIResponse<MetricsResponse>>, 'queryKey' | 'queryFn'>
+    options?: Omit<UseQueryOptions<MetricsResponse>, 'queryKey' | 'queryFn'>
 ) => {
     return useQuery({
         queryKey: ['health', 'metrics'],
@@ -89,9 +88,9 @@ export const useHealthStatus = () => {
     return {
         health,
         metrics,
-        isHealthy: health.data?.data?.status === 'healthy',
-        isDegraded: health.data?.data?.status === 'degraded',
-        isUnhealthy: health.data?.data?.status === 'unhealthy',
+        isHealthy: health.data?.status === 'healthy',
+        isDegraded: health.data?.status === 'degraded',
+        isUnhealthy: health.data?.status === 'unhealthy',
         isLoading: health.isLoading || metrics.isLoading,
         hasError: health.isError || metrics.isError,
     };

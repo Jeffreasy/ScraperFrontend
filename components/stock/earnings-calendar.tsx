@@ -5,14 +5,77 @@ import { useEarningsCalendar } from '@/lib/hooks/use-earnings-calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import {
+    cn,
+    cardStyles,
+    spacing,
+    padding,
+    transitions,
+    getSentimentColor,
+    flexPatterns,
+    gap,
+    bodyText,
+} from '@/lib/styles/theme';
 
 interface EarningsCalendarProps {
     daysAhead?: number;
     limit?: number;
-    compact?: boolean;
+    variant?: 'default' | 'compact';
 }
 
-export function EarningsCalendar({ daysAhead = 7, limit = 5, compact = false }: EarningsCalendarProps) {
+// ============================================================================
+// COMPONENT VARIANTS
+// ============================================================================
+
+const earningsCalendarVariants = cva(
+    ['transition-all duration-200'],
+    {
+        variants: {
+            variant: {
+                default: '',
+                compact: 'border-muted',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+const earningsItemVariants = cva(
+    ['flex items-center justify-between', transitions.colors],
+    {
+        variants: {
+            variant: {
+                default: 'p-3 border rounded-md hover:bg-accent/50',
+                compact: 'py-2 first:pt-0 last:pb-0 hover:bg-accent/30 rounded px-1',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+const earningsBadgeVariants = cva(
+    ['inline-flex items-center px-2 py-0.5 rounded', bodyText.xs, 'font-medium'],
+    {
+        variants: {
+            time: {
+                bmo: 'bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-300',
+                amc: 'bg-purple-100 text-purple-800 dark:bg-purple-950/30 dark:text-purple-300',
+                default: 'bg-gray-100 text-gray-800 dark:bg-gray-950/30 dark:text-gray-300',
+            },
+        },
+        defaultVariants: {
+            time: 'default',
+        },
+    }
+);
+
+export function EarningsCalendar({ daysAhead = 7, limit = 5, variant = 'default' }: EarningsCalendarProps) {
+    const isCompact = variant === 'compact';
     const from = useMemo(() => new Date().toISOString().split('T')[0], []);
     const to = useMemo(() => {
         const date = new Date();
@@ -29,18 +92,18 @@ export function EarningsCalendar({ daysAhead = 7, limit = 5, compact = false }: 
 
     if (loading) {
         return (
-            <Card className={compact ? 'border-muted' : undefined}>
-                <CardHeader className={compact ? 'pb-3 px-4 pt-4' : undefined}>
-                    <CardTitle className={compact ? 'text-sm font-semibold' : undefined}>
+            <Card variant="default" hover="lift" className={earningsCalendarVariants({ variant })}>
+                <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : padding.md)}>
+                    <CardTitle className={cn(isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold')}>
                         Earnings Calendar
                     </CardTitle>
                 </CardHeader>
-                <CardContent className={compact ? 'px-4 pb-4' : undefined}>
-                    <div className={compact ? 'space-y-1' : 'space-y-3'}>
-                        {[...Array(compact ? 3 : 5)].map((_, i) => (
-                            <div key={i} className={`flex items-center justify-between ${compact ? 'py-1.5' : 'p-3 border rounded-lg'}`}>
-                                <Skeleton className={compact ? 'h-4 w-16' : 'h-5 w-20'} />
-                                <Skeleton className={compact ? 'h-4 w-20' : 'h-6 w-24'} />
+                <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                    <div className={cn(isCompact ? spacing.xs : spacing.md)}>
+                        {[...Array(isCompact ? 3 : 5)].map((_, i) => (
+                            <div key={i} className={earningsItemVariants({ variant })}>
+                                <Skeleton className={cn(isCompact ? 'h-4 w-16' : 'h-5 w-20')} />
+                                <Skeleton className={cn(isCompact ? 'h-4 w-20' : 'h-6 w-24')} />
                             </div>
                         ))}
                     </div>
@@ -51,14 +114,14 @@ export function EarningsCalendar({ daysAhead = 7, limit = 5, compact = false }: 
 
     if (error || !earnings || displayEarnings.length === 0) {
         return (
-            <Card className={compact ? 'border-muted' : undefined}>
-                <CardHeader className={compact ? 'pb-3 px-4 pt-4' : undefined}>
-                    <CardTitle className={compact ? 'text-sm font-semibold' : undefined}>
+            <Card variant="default" hover="lift" className={earningsCalendarVariants({ variant })}>
+                <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : padding.md)}>
+                    <CardTitle className={cn(isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold')}>
                         Earnings Calendar
                     </CardTitle>
                 </CardHeader>
-                <CardContent className={compact ? 'px-4 pb-4' : undefined}>
-                    <p className="text-sm text-muted-foreground">
+                <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                    <p className={cn(bodyText.small, 'text-muted-foreground')}>
                         {error?.message || 'No upcoming earnings'}
                     </p>
                 </CardContent>
@@ -66,13 +129,13 @@ export function EarningsCalendar({ daysAhead = 7, limit = 5, compact = false }: 
         );
     }
 
-    if (compact) {
+    if (isCompact) {
         return (
-            <Card className="border-muted">
+            <Card variant="default" hover="lift" className={earningsCalendarVariants({ variant })}>
                 <CardHeader className="pb-3 px-4 pt-4">
-                    <div className="flex items-center justify-between">
+                    <div className={flexPatterns.between}>
                         <CardTitle className="text-sm font-semibold">Earnings Calendar</CardTitle>
-                        <span className="text-xs text-muted-foreground">{displayEarnings.length} scheduled</span>
+                        <span className={cn(bodyText.xs, 'text-muted-foreground')}>{displayEarnings.length} scheduled</span>
                     </div>
                 </CardHeader>
                 <CardContent className="px-4 pb-4">
@@ -84,26 +147,25 @@ export function EarningsCalendar({ daysAhead = 7, limit = 5, compact = false }: 
                             return (
                                 <div
                                     key={`${earning.symbol}-${index}`}
-                                    className={`flex items-center justify-between py-2 first:pt-0 last:pb-0 hover:bg-accent/30 transition-colors rounded px-1 ${isToday ? 'bg-primary/5' : ''
-                                        }`}
+                                    className={earningsItemVariants({ variant })}
                                 >
-                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <div className={cn(flexPatterns.start, gap.sm, 'flex-1 min-w-0')}>
                                         <span className="font-semibold text-sm min-w-[45px]">{earning.symbol}</span>
-                                        <span className="text-xs text-muted-foreground">
+                                        <span className={cn(bodyText.xs, 'text-muted-foreground')}>
                                             {new Date(earning.date).toLocaleDateString('nl-NL', {
                                                 month: 'short',
                                                 day: 'numeric'
                                             })}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                                    <div className={cn(flexPatterns.start, gap.xs)}>
+                                        <span className={cn(bodyText.xs, 'font-medium tabular-nums text-muted-foreground')}>
                                             ${earning.eps.toFixed(2)}
                                         </span>
                                         {beatEstimate ? (
-                                            <TrendingUp className="w-3.5 h-3.5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                            <TrendingUp className={cn('w-3.5 h-3.5 flex-shrink-0', getSentimentColor('positive').split(' ')[1])} />
                                         ) : (
-                                            <TrendingDown className="w-3.5 h-3.5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                                            <TrendingDown className={cn('w-3.5 h-3.5 flex-shrink-0', getSentimentColor('negative').split(' ')[1])} />
                                         )}
                                     </div>
                                 </div>
@@ -116,15 +178,15 @@ export function EarningsCalendar({ daysAhead = 7, limit = 5, compact = false }: 
     }
 
     return (
-        <Card>
-            <CardHeader className="pb-4">
-                <CardTitle>Earnings Calendar</CardTitle>
-                <p className="text-sm text-muted-foreground">
+        <Card variant="default" hover="lift">
+            <CardHeader className={cn(padding.lg, 'pb-4')}>
+                <CardTitle className="text-xl font-semibold">Earnings Calendar</CardTitle>
+                <p className={cn(bodyText.small, 'text-muted-foreground')}>
                     Next {daysAhead} days • {displayEarnings.length} scheduled
                 </p>
             </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
+            <CardContent className={padding.lg}>
+                <div className={cn(spacing.sm)}>
                     {displayEarnings.map((earning, index) => {
                         const beatEstimate = earning.eps > earning.epsEstimated;
                         const epsVariance = ((earning.eps - earning.epsEstimated) / earning.epsEstimated) * 100;
@@ -132,40 +194,35 @@ export function EarningsCalendar({ daysAhead = 7, limit = 5, compact = false }: 
                         return (
                             <div
                                 key={`${earning.symbol}-${index}`}
-                                className="flex items-center justify-between p-3 border rounded-md hover:bg-accent/50 transition-colors"
+                                className={earningsItemVariants({ variant: 'default' })}
                             >
-                                <div className="flex items-center gap-3 flex-1">
+                                <div className={cn(flexPatterns.start, gap.md, 'flex-1')}>
                                     <span className="font-bold min-w-[60px]">{earning.symbol}</span>
-                                    <span className="text-sm text-muted-foreground">
+                                    <span className={cn(bodyText.small, 'text-muted-foreground')}>
                                         {new Date(earning.date).toLocaleDateString('nl-NL', {
                                             weekday: 'short',
                                             month: 'short',
                                             day: 'numeric'
                                         })}
                                     </span>
-                                    <span className={`text-xs px-2 py-0.5 rounded ${earning.time === 'bmo'
-                                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-300'
-                                            : earning.time === 'amc'
-                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/30 dark:text-purple-300'
-                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-950/30 dark:text-gray-300'
-                                        }`}>
-                                        {earning.time.toUpperCase()}
+                                    <span className={earningsBadgeVariants({ time: earning.time as any })}>
+                                        {earning.time?.toUpperCase() || 'TBD'}
                                     </span>
                                 </div>
 
-                                <div className="flex items-center gap-3">
+                                <div className={cn(flexPatterns.start, gap.md)}>
                                     <div className="text-right">
-                                        <div className="text-sm font-semibold tabular-nums">
+                                        <div className={cn(bodyText.small, 'font-semibold tabular-nums')}>
                                             ${earning.eps.toFixed(2)}
                                         </div>
-                                        <div className="text-xs text-muted-foreground">
+                                        <div className={cn(bodyText.xs, 'text-muted-foreground')}>
                                             est. ${earning.epsEstimated.toFixed(2)}
                                         </div>
                                     </div>
                                     {beatEstimate ? (
-                                        <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                        <TrendingUp className={cn('w-4 h-4 flex-shrink-0', getSentimentColor('positive').split(' ')[1])} />
                                     ) : (
-                                        <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                                        <TrendingDown className={cn('w-4 h-4 flex-shrink-0', getSentimentColor('negative').split(' ')[1])} />
                                     )}
                                 </div>
                             </div>

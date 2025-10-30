@@ -2,12 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Search, Filter, SortAsc, X, AlertCircle, Inbox } from 'lucide-react';
-import { advancedApiClient } from '@/lib/api/advanced-client';
 import { ArticleFilters, SortBy, SortOrder } from '@/lib/types/api';
-import { STALE_TIMES } from '@/components/providers';
 import { ArticleCard } from '@/components/article-card';
 import { ArticleListSkeleton } from '@/components/article-skeleton';
 import { Pagination } from '@/components/pagination';
@@ -16,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArticleFiltersPanel } from '@/components/article-filters';
 import { EarningsCalendar } from '@/components/stock';
+import { NewArticlesNotification } from '@/components/new-articles-notification';
+import { useArticleLiveUpdates, useNewArticlesNotification } from '@/lib/hooks/use-article-live-updates';
 import {
     cn,
     flexPatterns,
@@ -136,26 +135,38 @@ export default function HomePage() {
         setPage(1);
     }, 300);
 
-    // Fetch articles
-    const { data, isLoading, error } = useQuery({
-        queryKey: ['articles', page, debouncedSearch, filters],
-        queryFn: async () => {
-            const currentFilters: ArticleFilters = {
+    // Live article updates with notification
+    const {
+        newCount,
+        showNotification,
+        handleNewArticles,
+        clearNotification,
+    } = useNewArticlesNotification();
+
+    // Fetch articles with live updates
+    const { data, isLoading, error, refresh } = useArticleLiveUpdates(
+        ['articles', page, debouncedSearch, filters],
+        {
+            filters: {
                 ...filters,
                 offset: (page - 1) * ITEMS_PER_PAGE,
-            };
+            },
+            searchQuery: debouncedSearch,
+            onNewArticles: handleNewArticles,
+            pollingInterval: {
+                min: 10000,  // 10 seconden wanneer actief
+                max: 60000,  // 1 minuut wanneer inactief
+            },
+        }
+    );
 
-            if (debouncedSearch) {
-                return advancedApiClient.searchArticles({
-                    q: debouncedSearch,
-                    ...currentFilters,
-                });
-            }
-
-            return advancedApiClient.getArticles(currentFilters);
-        },
-        staleTime: STALE_TIMES.articles,
-    });
+    // Handle refresh when notification is clicked
+    const handleRefreshClick = () => {
+        clearNotification();
+        setPage(1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        refresh();
+    };
 
     const handlePageChange = (newPage: number) => {
         setPage(newPage);
@@ -185,6 +196,15 @@ export default function HomePage() {
 
     return (
         <div className={spacing.lg}>
+            {/* New Articles Notification */}
+            {showNotification && newCount > 0 && (
+                <NewArticlesNotification
+                    count={newCount}
+                    onRefresh={handleRefreshClick}
+                    onDismiss={clearNotification}
+                />
+            )}
+
             {/* Page Header */}
             <PageHeader />
 
@@ -214,7 +234,7 @@ export default function HomePage() {
             {/* Earnings Calendar Widget */}
             {!debouncedSearch && !hasActiveFilters && (
                 <div className="my-8 animate-in fade-in duration-500">
-                    <EarningsCalendar daysAhead={7} limit={5} compact={true} />
+                    <EarningsCalendar daysAhead={7} limit={5} variant="compact" />
                 </div>
             )}
 
@@ -453,8 +473,5 @@ function ArticlesContent({ articles, pagination, onPageChange }: ArticlesContent
 // EXPORTS
 // ============================================================================
 
-export {
-    activeFilterBadgeVariants,
-    emptyStateVariants,
-    errorBannerVariants,
-};
+// Note: CVA variants are not exported from page components to avoid Next.js type conflicts
+// Use these variants only within this component file

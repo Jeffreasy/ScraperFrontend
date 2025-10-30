@@ -4,13 +4,76 @@ import React, { useMemo } from 'react';
 import { useStockHistorical } from '@/lib/hooks/use-stock-historical';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cva, type VariantProps } from 'class-variance-authority';
+import {
+    cn,
+    cardStyles,
+    spacing,
+    padding,
+    transitions,
+    getSentimentColor,
+    flexPatterns,
+    gap,
+    bodyText,
+} from '@/lib/styles/theme';
 
 interface StockChartProps {
     symbol: string;
     days?: number;
+    variant?: 'default' | 'compact';
 }
 
-export function StockChart({ symbol, days = 30 }: StockChartProps) {
+// ============================================================================
+// COMPONENT VARIANTS
+// ============================================================================
+
+const stockChartVariants = cva(
+    ['transition-all duration-200'],
+    {
+        variants: {
+            variant: {
+                default: '',
+                compact: 'border-muted',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+const chartStatsVariants = cva(
+    ['flex items-baseline', gap.sm],
+    {
+        variants: {
+            variant: {
+                default: '',
+                compact: 'flex-col items-start gap-1',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+const chartInfoVariants = cva(
+    ['flex items-center justify-between mt-4', bodyText.xs, 'text-muted-foreground'],
+    {
+        variants: {
+            variant: {
+                default: '',
+                compact: 'flex-col items-start gap-2 mt-2',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+export function StockChart({ symbol, days = 30, variant = 'default' }: StockChartProps) {
+    const isCompact = variant === 'compact';
     const to = useMemo(() => new Date().toISOString().split('T')[0], []);
     const from = useMemo(() => {
         const date = new Date();
@@ -86,12 +149,14 @@ export function StockChart({ symbol, days = 30 }: StockChartProps) {
 
     if (loading) {
         return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Koersontwikkeling</CardTitle>
+            <Card variant="default" hover="lift" className={stockChartVariants({ variant })}>
+                <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : padding.md)}>
+                    <CardTitle className={cn(isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold')}>
+                        Koersontwikkeling
+                    </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <Skeleton className="w-full h-80" />
+                <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                    <Skeleton className={cn(isCompact ? 'w-full h-48' : 'w-full h-80')} />
                 </CardContent>
             </Card>
         );
@@ -99,12 +164,14 @@ export function StockChart({ symbol, days = 30 }: StockChartProps) {
 
     if (error || !chartData) {
         return (
-            <Card className="border-destructive/50">
-                <CardHeader>
-                    <CardTitle>Koersontwikkeling</CardTitle>
+            <Card variant="default" hover="lift" className={cn(stockChartVariants({ variant }), 'border-destructive/50')}>
+                <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : padding.md)}>
+                    <CardTitle className={cn(isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold')}>
+                        Koersontwikkeling
+                    </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground">
+                <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                    <p className={cn(bodyText.small, 'text-muted-foreground')}>
                         {error?.message || 'Geen data beschikbaar'}
                     </p>
                 </CardContent>
@@ -117,29 +184,31 @@ export function StockChart({ symbol, days = 30 }: StockChartProps) {
     const gradientColor = isPositive ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+        <Card variant="default" hover="lift" className={stockChartVariants({ variant })}>
+            <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : padding.md)}>
+                <CardTitle className={cn(flexPatterns.between, isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold')}>
                     <span>Koersontwikkeling {symbol}</span>
-                    <span className="text-sm font-normal text-muted-foreground">
-                        {days} dagen
-                    </span>
+                    {!isCompact && (
+                        <span className={cn(bodyText.small, 'font-normal text-muted-foreground')}>
+                            {days} dagen
+                        </span>
+                    )}
                 </CardTitle>
-                <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold">
+                <div className={chartStatsVariants({ variant })}>
+                    <span className={cn(isCompact ? 'text-xl font-bold' : 'text-2xl font-bold')}>
                         ${chartData.currentPrice.toFixed(2)}
                     </span>
-                    <span className={`text-sm font-medium ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    <span className={cn(bodyText.small, 'font-medium', isPositive ? getSentimentColor('positive').split(' ')[1] : getSentimentColor('negative').split(' ')[1])}>
                         {isPositive ? '+' : ''}{chartData.priceChange.toFixed(2)} ({isPositive ? '+' : ''}{chartData.priceChangePercent.toFixed(2)}%)
                     </span>
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
                 <div className="relative">
                     <svg
                         viewBox={`0 0 ${chartData.width} ${chartData.height}`}
                         className="w-full h-auto"
-                        style={{ maxHeight: '400px' }}
+                        style={{ maxHeight: isCompact ? '300px' : '400px' }}
                     >
                         {/* Grid lines */}
                         {chartData.yLabels.map((label, i) => (
@@ -163,7 +232,7 @@ export function StockChart({ symbol, days = 30 }: StockChartProps) {
                                 y={label.y}
                                 textAnchor="end"
                                 dominantBaseline="middle"
-                                className="text-xs fill-muted-foreground"
+                                className={cn(bodyText.xs, 'fill-muted-foreground')}
                             >
                                 ${label.value.toFixed(2)}
                             </text>
@@ -209,7 +278,7 @@ export function StockChart({ symbol, days = 30 }: StockChartProps) {
                     </svg>
                 </div>
 
-                <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+                <div className={chartInfoVariants({ variant })}>
                     <span>Min: ${chartData.minPrice.toFixed(2)}</span>
                     <span>Max: ${chartData.maxPrice.toFixed(2)}</span>
                 </div>

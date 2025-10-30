@@ -6,12 +6,75 @@ import { StockQuote } from '@/lib/types/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import {
+    cn,
+    cardStyles,
+    spacing,
+    padding,
+    transitions,
+    getSentimentColor,
+    flexPatterns,
+    gap,
+    bodyText,
+} from '@/lib/styles/theme';
 
 interface PortfolioTrackerProps {
     symbols: string[];
+    variant?: 'default' | 'compact';
 }
 
-export function PortfolioTracker({ symbols }: PortfolioTrackerProps) {
+// ============================================================================
+// COMPONENT VARIANTS
+// ============================================================================
+
+const portfolioTrackerVariants = cva(
+    ['transition-all duration-200'],
+    {
+        variants: {
+            variant: {
+                default: '',
+                compact: 'border-muted',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+const portfolioItemVariants = cva(
+    ['flex items-center justify-between rounded', transitions.colors],
+    {
+        variants: {
+            variant: {
+                default: 'p-3 border hover:bg-accent/50',
+                compact: 'p-2 border hover:bg-accent/30',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+        },
+    }
+);
+
+const changeBadgeVariants = cva(
+    ['inline-flex items-center px-2 py-0.5 rounded', bodyText.xs, 'font-medium'],
+    {
+        variants: {
+            sentiment: {
+                positive: getSentimentColor('positive'),
+                negative: getSentimentColor('negative'),
+            },
+        },
+        defaultVariants: {
+            sentiment: 'positive',
+        },
+    }
+);
+
+export function PortfolioTracker({ symbols, variant = 'default' }: PortfolioTrackerProps) {
+    const isCompact = variant === 'compact';
     const [quotes, setQuotes] = useState<Record<string, StockQuote>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
@@ -32,16 +95,13 @@ export function PortfolioTracker({ symbols }: PortfolioTrackerProps) {
                 // Single batch call for all symbols!
                 const response = await apiClient.getMultipleQuotes(symbols);
 
-                if (response.success && response.data) {
-                    setQuotes(response.data);
+                // Direct response now, no wrapper
+                setQuotes(response);
 
-                    // Calculate average change
-                    const changes = Object.values(response.data).map(q => q.change_percent);
-                    const avgChange = changes.reduce((sum, c) => sum + c, 0) / changes.length;
-                    setTotalChange(avgChange);
-                } else {
-                    throw new Error(response.error?.message || 'Failed to fetch portfolio');
-                }
+                // Calculate average change
+                const changes = Object.values(response).map(q => q.change_percent);
+                const avgChange = changes.reduce((sum, c) => sum + c, 0) / changes.length;
+                setTotalChange(avgChange);
             } catch (err) {
                 setError(err instanceof Error ? err : new Error('Unknown error'));
             } finally {
@@ -58,17 +118,19 @@ export function PortfolioTracker({ symbols }: PortfolioTrackerProps) {
 
     if (loading) {
         return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Portfolio Overview</CardTitle>
+            <Card variant="default" hover="lift" className={portfolioTrackerVariants({ variant })}>
+                <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : padding.md)}>
+                    <CardTitle className={cn(isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold')}>
+                        Portfolio Overview
+                    </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="space-y-3">
+                <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                    <div className={cn(isCompact ? spacing.xs : spacing.md)}>
                         {symbols.map((symbol) => (
-                            <div key={symbol} className="flex items-center justify-between p-3 border rounded-lg">
-                                <Skeleton className="h-5 w-16" />
-                                <Skeleton className="h-6 w-24" />
-                                <Skeleton className="h-5 w-20" />
+                            <div key={symbol} className={portfolioItemVariants({ variant })}>
+                                <Skeleton className={cn(isCompact ? 'h-4 w-12' : 'h-5 w-16')} />
+                                <Skeleton className={cn(isCompact ? 'h-5 w-16' : 'h-6 w-24')} />
+                                <Skeleton className={cn(isCompact ? 'h-4 w-12' : 'h-5 w-20')} />
                             </div>
                         ))}
                     </div>
@@ -79,12 +141,14 @@ export function PortfolioTracker({ symbols }: PortfolioTrackerProps) {
 
     if (error) {
         return (
-            <Card className="border-destructive/50">
-                <CardHeader>
-                    <CardTitle>Portfolio Overview</CardTitle>
+            <Card variant="default" hover="lift" className={cn(portfolioTrackerVariants({ variant }), 'border-destructive/50')}>
+                <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : padding.md)}>
+                    <CardTitle className={cn(isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold')}>
+                        Portfolio Overview
+                    </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground">{error.message}</p>
+                <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                    <p className={cn(bodyText.small, 'text-muted-foreground')}>{error.message}</p>
                 </CardContent>
             </Card>
         );
@@ -93,61 +157,59 @@ export function PortfolioTracker({ symbols }: PortfolioTrackerProps) {
     const isPositiveTotal = totalChange >= 0;
 
     return (
-        <Card>
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <CardTitle>Portfolio Overview</CardTitle>
-                    <div className={`flex items-center gap-1 text-lg font-bold ${isPositiveTotal
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
-                        }`}>
+        <Card variant="default" hover="lift" className={portfolioTrackerVariants({ variant })}>
+            <CardHeader className={cn(isCompact ? 'pb-3 px-4 pt-4' : padding.md)}>
+                <div className={flexPatterns.between}>
+                    <CardTitle className={cn(isCompact ? 'text-sm font-semibold' : 'text-lg font-semibold')}>
+                        Portfolio Overview
+                    </CardTitle>
+                    <div className={cn(flexPatterns.start, gap.sm, isCompact ? 'text-sm font-bold' : 'text-lg font-bold', isPositiveTotal
+                        ? getSentimentColor('positive').split(' ')[1]
+                        : getSentimentColor('negative').split(' ')[1]
+                    )}>
                         {isPositiveTotal ? (
-                            <TrendingUp className="w-5 h-5" />
+                            <TrendingUp className="w-4 h-4" />
                         ) : (
-                            <TrendingDown className="w-5 h-5" />
+                            <TrendingDown className="w-4 h-4" />
                         )}
                         {isPositiveTotal ? '+' : ''}{totalChange.toFixed(2)}%
                     </div>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                    {symbols.length} aande{symbols.length !== 1 ? 'len' : 'el'} gevolgd
-                </p>
+                {!isCompact && (
+                    <p className={cn(bodyText.small, 'text-muted-foreground')}>
+                        {symbols.length} aande{symbols.length !== 1 ? 'len' : 'el'} gevolgd
+                    </p>
+                )}
             </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
+            <CardContent className={cn(isCompact ? 'px-4 pb-4' : padding.md)}>
+                <div className={cn(isCompact ? spacing.xs : spacing.sm)}>
                     {symbols.map((symbol) => {
                         const quote = quotes[symbol];
                         if (!quote) {
                             return (
-                                <div key={symbol} className="flex items-center justify-between p-3 border rounded-lg opacity-50">
-                                    <span className="font-medium">{symbol}</span>
-                                    <span className="text-sm text-muted-foreground">Niet beschikbaar</span>
+                                <div key={symbol} className={cn(portfolioItemVariants({ variant }), 'opacity-50')}>
+                                    <span className={cn(isCompact ? 'font-medium text-sm' : 'font-medium')}>{symbol}</span>
+                                    <span className={cn(bodyText.xs, 'text-muted-foreground')}>Niet beschikbaar</span>
                                 </div>
                             );
                         }
 
                         const isPositive = quote.change >= 0;
-                        const changeColor = isPositive
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400';
-                        const changeBg = isPositive
-                            ? 'bg-green-50 dark:bg-green-950/30'
-                            : 'bg-red-50 dark:bg-red-950/30';
 
                         return (
                             <div
                                 key={symbol}
-                                className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                                className={portfolioItemVariants({ variant })}
                             >
                                 <div className="flex-1">
-                                    <div className="font-bold">{quote.symbol}</div>
-                                    <div className="text-xs text-muted-foreground">{quote.name}</div>
+                                    <div className={cn(isCompact ? 'font-bold text-sm' : 'font-bold')}>{quote.symbol}</div>
+                                    <div className={cn(bodyText.xs, 'text-muted-foreground')}>{isCompact ? quote.symbol : quote.name}</div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="font-bold">
+                                    <div className={cn(isCompact ? 'font-bold text-sm' : 'font-bold')}>
                                         {quote.currency === 'USD' ? '$' : '€'}{quote.price.toFixed(2)}
                                     </div>
-                                    <div className={`text-sm font-medium ${changeColor} ${changeBg} px-2 py-0.5 rounded mt-1 inline-block`}>
+                                    <div className={changeBadgeVariants({ sentiment: isPositive ? 'positive' : 'negative' })}>
                                         {isPositive ? '+' : ''}{quote.change_percent.toFixed(2)}%
                                     </div>
                                 </div>
@@ -157,7 +219,7 @@ export function PortfolioTracker({ symbols }: PortfolioTrackerProps) {
                 </div>
 
                 {symbols.length === 0 && (
-                    <div className="text-center py-8 text-sm text-muted-foreground">
+                    <div className={cn('text-center py-8', bodyText.small, 'text-muted-foreground')}>
                         Geen aandelen toegevoegd aan portfolio
                     </div>
                 )}

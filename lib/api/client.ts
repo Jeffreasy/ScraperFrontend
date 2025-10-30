@@ -1,25 +1,25 @@
 import type {
-  APIResponse,
   Article,
-  ArticleFilters,
+  ArticleFilter,
+  ArticleListResponse,
   SearchFilters,
   SourceInfo,
   CategoryInfo,
   StatsResponse,
-  HealthResponse,
+  HealthStatus,
   LivenessResponse,
   ReadinessResponse,
   MetricsResponse,
   ScrapeRequest,
   ScrapeResponse,
-  RateLimitHeaders,
-  AIEnrichment,
-  SentimentStats,
-  TrendingTopicsResponse,
-  ProcessorStats,
-  ArticleWithAI,
-  ChatRequest,
-  ChatResponse,
+  TrendingResponse,
+  SentimentTrendsResponse,
+  HotEntitiesResponse,
+  EntitySentimentResponse,
+  AnalyticsOverview,
+  ArticleStatsResponse,
+  EmailStats,
+  EmailFetchResponse,
   StockQuote,
   StockProfile,
   HistoricalDataResponse,
@@ -33,8 +33,12 @@ import type {
   AnalystRatingsResponse,
   PriceTarget,
   StockStatsResponse,
-  EmailStats,
-  EmailFetchResponse,
+  CacheStats,
+  CacheInvalidateRequest,
+  CacheInvalidateResponse,
+  ChatRequest,
+  ChatResponse,
+  ScraperStats,
 } from '@/lib/types/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -49,10 +53,10 @@ class APIClient {
     this.apiKey = apiKey;
   }
 
-  private async fetchWithErrorHandling<T>(
-    url: string,
+  private async fetch<T>(
+    endpoint: string,
     options: RequestInit = {}
-  ): Promise<APIResponse<T>> {
+  ): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
@@ -62,33 +66,19 @@ class APIClient {
       headers['X-API-Key'] = this.apiKey;
     }
 
-    try {
-      const response = await fetch(`${this.baseURL}${url}`, {
-        ...options,
-        headers,
-      });
+    const response = await fetch(`${this.baseURL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-      // Extract rate limit headers
-      const rateLimitHeaders: RateLimitHeaders = {
-        limit: parseInt(response.headers.get('X-RateLimit-Limit') || '0'),
-        remaining: parseInt(response.headers.get('X-RateLimit-Remaining') || '0'),
-        reset: parseInt(response.headers.get('X-RateLimit-Reset') || '0'),
-      };
-
-      const data: APIResponse<T> = await response.json();
-
-      // Attach rate limit info to response
-      (data as any).rateLimitHeaders = rateLimitHeaders;
-
-      if (!response.ok) {
-        console.error('API Error:', data.error);
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Network Error:', error);
-      throw error;
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        message: `HTTP ${response.status}`
+      }));
+      throw new Error(error.message || `HTTP ${response.status}`);
     }
+
+    return response.json();
   }
 
   private buildQueryString(params: Record<string, any>): string {
@@ -104,477 +94,358 @@ class APIClient {
     return queryString ? `?${queryString}` : '';
   }
 
+  // ============================================================================
   // Health Checks
-  async healthCheck(): Promise<APIResponse<HealthResponse>> {
-    return this.fetchWithErrorHandling<HealthResponse>('/health');
+  // ============================================================================
+
+  async healthCheck(): Promise<HealthStatus> {
+    return this.fetch<HealthStatus>('/health');
   }
 
-  async livenessCheck(): Promise<APIResponse<LivenessResponse>> {
-    return this.fetchWithErrorHandling<LivenessResponse>('/health/live');
+  async livenessCheck(): Promise<LivenessResponse> {
+    return this.fetch<LivenessResponse>('/health/live');
   }
 
-  async readinessCheck(): Promise<APIResponse<ReadinessResponse>> {
-    return this.fetchWithErrorHandling<ReadinessResponse>('/health/ready');
+  async readinessCheck(): Promise<ReadinessResponse> {
+    return this.fetch<ReadinessResponse>('/health/ready');
   }
 
-  async getMetrics(): Promise<APIResponse<MetricsResponse>> {
-    return this.fetchWithErrorHandling<MetricsResponse>('/health/metrics');
+  async getMetrics(): Promise<MetricsResponse> {
+    return this.fetch<MetricsResponse>('/health/metrics');
   }
 
-  // Articles
-  async getArticles(filters?: ArticleFilters): Promise<APIResponse<Article[]>> {
+  // ============================================================================
+  // Articles API
+  // ============================================================================
+
+  async getArticles(filters?: ArticleFilter): Promise<ArticleListResponse> {
     const queryString = filters ? this.buildQueryString(filters) : '';
-    return this.fetchWithErrorHandling<Article[]>(`/api/v1/articles${queryString}`);
+    return this.fetch<ArticleListResponse>(`/api/v1/articles${queryString}`);
   }
 
-  async getArticle(id: number): Promise<APIResponse<Article>> {
-    return this.fetchWithErrorHandling<Article>(`/api/v1/articles/${id}`);
+  async getArticle(id: number): Promise<{ article: Article }> {
+    return this.fetch<{ article: Article }>(`/api/v1/articles/${id}`);
   }
 
-  async searchArticles(filters: SearchFilters): Promise<APIResponse<Article[]>> {
+  async searchArticles(filters: SearchFilters): Promise<ArticleListResponse> {
     const queryString = this.buildQueryString(filters);
-    return this.fetchWithErrorHandling<Article[]>(`/api/v1/articles/search${queryString}`);
+    return this.fetch<ArticleListResponse>(`/api/v1/articles/search${queryString}`);
   }
 
-  async getArticleStats(): Promise<APIResponse<StatsResponse>> {
-    return this.fetchWithErrorHandling<StatsResponse>('/api/v1/articles/stats');
+  async getArticleStats(): Promise<Record<string, number>> {
+    return this.fetch<Record<string, number>>('/api/v1/articles/stats');
   }
 
-  // Sources
-  async getSources(): Promise<APIResponse<SourceInfo[]>> {
-    return this.fetchWithErrorHandling<SourceInfo[]>('/api/v1/sources');
-  }
-
-  // Categories
-  async getCategories(): Promise<APIResponse<CategoryInfo[]>> {
-    return this.fetchWithErrorHandling<CategoryInfo[]>('/api/v1/categories');
-  }
-
-  // Scraper (requires API key)
-  async triggerScrape(request?: ScrapeRequest): Promise<APIResponse<ScrapeResponse>> {
-    return this.fetchWithErrorHandling<ScrapeResponse>('/api/v1/scrape', {
-      method: 'POST',
-      body: request ? JSON.stringify(request) : undefined,
-    });
-  }
-
-  async getScraperStats(): Promise<APIResponse<{
-    content_extraction?: {
-      total: number;
-      extracted: number;
-      pending: number;
-    };
-    browser_pool?: {
-      enabled: boolean;
-      pool_size: number;
-      available: number;
-      in_use: number;
-      closed: boolean;
-    };
-  }>> {
-    return this.fetchWithErrorHandling<{
-      content_extraction?: {
-        total: number;
-        extracted: number;
-        pending: number;
-      };
-      browser_pool?: {
-        enabled: boolean;
-        pool_size: number;
-        available: number;
-        in_use: number;
-        closed: boolean;
-      };
-    }>('/api/v1/scraper/stats');
-  }
-
-  // AI Enrichment Methods
-  async getArticleEnrichment(articleId: number): Promise<APIResponse<AIEnrichment>> {
-    return this.fetchWithErrorHandling<AIEnrichment>(`/api/v1/articles/${articleId}/enrichment`);
-  }
-
-  async getSentimentStats(
-    source?: string,
-    startDate?: string,
-    endDate?: string
-  ): Promise<APIResponse<SentimentStats>> {
-    const params: Record<string, any> = {};
-    if (source) params.source = source;
-    if (startDate) params.start_date = startDate;
-    if (endDate) params.end_date = endDate;
-
-    const queryString = this.buildQueryString(params);
-    return this.fetchWithErrorHandling<SentimentStats>(`/api/v1/ai/sentiment/stats${queryString}`);
-  }
-
-  async getTrendingTopics(
-    hours: number = 24,
-    minArticles: number = 3
-  ): Promise<APIResponse<TrendingTopicsResponse>> {
-    const queryString = this.buildQueryString({ hours, min_articles: minArticles });
-    return this.fetchWithErrorHandling<TrendingTopicsResponse>(`/api/v1/ai/trending${queryString}`);
-  }
-
-  async getArticlesByEntity(
-    entityName: string,
-    entityType: 'persons' | 'organizations' | 'locations' = 'persons',
-    limit: number = 50
-  ): Promise<APIResponse<Article[]>> {
-    const encodedEntity = encodeURIComponent(entityName);
-    const queryString = this.buildQueryString({ type: entityType, limit });
-    return this.fetchWithErrorHandling<Article[]>(`/api/v1/ai/entity/${encodedEntity}${queryString}`);
-  }
-
-  async getProcessorStats(): Promise<APIResponse<ProcessorStats>> {
-    return this.fetchWithErrorHandling<ProcessorStats>('/api/v1/ai/processor/stats');
-  }
-
-  async processArticle(articleId: number): Promise<APIResponse<{
+  async extractArticleContent(articleId: number): Promise<{
     message: string;
-    article_id: number;
-    enrichment: AIEnrichment;
-  }>> {
-    return this.fetchWithErrorHandling<{
+    article: Article;
+  }> {
+    return this.fetch<{
       message: string;
-      article_id: number;
-      enrichment: AIEnrichment;
-    }>(`/api/v1/articles/${articleId}/process`, {
-      method: 'POST',
-    });
-  }
-
-  async triggerBatchProcessing(): Promise<APIResponse<{
-    message: string;
-    total_processed: number;
-    success_count: number;
-    failure_count: number;
-    duration: string;
-  }>> {
-    return this.fetchWithErrorHandling<{
-      message: string;
-      total_processed: number;
-      success_count: number;
-      failure_count: number;
-      duration: string;
-    }>('/api/v1/ai/process/trigger', {
-      method: 'POST',
-    });
-  }
-
-  // Content Extraction (HTML + Browser Fallback Scraping)
-  async extractArticleContent(articleId: number): Promise<APIResponse<{
-    message: string;
-    characters: number;
-    extraction_method?: 'html' | 'browser' | 'rss';
-    extraction_time_ms?: number;
-    article?: Article;
-  }>> {
-    return this.fetchWithErrorHandling<{
-      message: string;
-      characters: number;
-      extraction_method?: 'html' | 'browser' | 'rss';
-      extraction_time_ms?: number;
-      article?: Article;
+      article: Article;
     }>(`/api/v1/articles/${articleId}/extract-content`, {
       method: 'POST',
     });
   }
 
-  // AI Chat
-  async sendChatMessage(request: ChatRequest): Promise<APIResponse<ChatResponse>> {
-    return this.fetchWithErrorHandling<ChatResponse>('/api/v1/ai/chat', {
+  async getArticlesByTicker(symbol: string, limit: number = 10): Promise<ArticleListResponse> {
+    const queryString = this.buildQueryString({ limit });
+    return this.fetch<ArticleListResponse>(`/api/v1/articles/by-ticker/${symbol}${queryString}`);
+  }
+
+  // ============================================================================
+  // Analytics API
+  // ============================================================================
+
+  async getTrendingKeywords(
+    hours: number = 24,
+    minArticles: number = 3,
+    limit: number = 20
+  ): Promise<TrendingResponse> {
+    const queryString = this.buildQueryString({
+      hours,
+      min_articles: minArticles,
+      limit,
+    });
+    return this.fetch<TrendingResponse>(`/api/v1/analytics/trending${queryString}`);
+  }
+
+  async getSentimentTrends(source?: string): Promise<SentimentTrendsResponse> {
+    const params = source ? { source } : {};
+    const queryString = this.buildQueryString(params);
+    return this.fetch<SentimentTrendsResponse>(`/api/v1/analytics/sentiment-trends${queryString}`);
+  }
+
+  async getHotEntities(
+    entityType?: string,
+    limit: number = 50
+  ): Promise<HotEntitiesResponse> {
+    const params: Record<string, any> = { limit };
+    if (entityType) params.entity_type = entityType;
+    const queryString = this.buildQueryString(params);
+    return this.fetch<HotEntitiesResponse>(`/api/v1/analytics/hot-entities${queryString}`);
+  }
+
+  async getEntitySentiment(
+    entity: string,
+    days: number = 30
+  ): Promise<EntitySentimentResponse> {
+    const queryString = this.buildQueryString({ entity, days });
+    return this.fetch<EntitySentimentResponse>(`/api/v1/analytics/entity-sentiment${queryString}`);
+  }
+
+  async getAnalyticsOverview(): Promise<AnalyticsOverview> {
+    return this.fetch<AnalyticsOverview>('/api/v1/analytics/overview');
+  }
+
+  async getArticleStatsBySource(): Promise<ArticleStatsResponse> {
+    return this.fetch<ArticleStatsResponse>('/api/v1/analytics/article-stats');
+  }
+
+  async refreshAnalytics(): Promise<{
+    message: string;
+    results: Array<{
+      view_name: string;
+      refresh_time_ms: number;
+      rows_affected: number;
+    }>;
+    summary: {
+      total_views: number;
+      total_rows: number;
+      total_time_ms: number;
+      concurrent_mode: boolean;
+    };
+  }> {
+    return this.fetch<{
+      message: string;
+      results: Array<{
+        view_name: string;
+        refresh_time_ms: number;
+        rows_affected: number;
+      }>;
+      summary: {
+        total_views: number;
+        total_rows: number;
+        total_time_ms: number;
+        concurrent_mode: boolean;
+      };
+    }>('/api/v1/analytics/refresh', {
+      method: 'POST',
+    });
+  }
+
+  // ============================================================================
+  // Email API
+  // ============================================================================
+
+  async getEmailStats(): Promise<EmailStats> {
+    return this.fetch<EmailStats>('/api/v1/email/stats');
+  }
+
+  async fetchExistingEmails(): Promise<EmailFetchResponse> {
+    return this.fetch<EmailFetchResponse>('/api/v1/email/fetch-existing', {
+      method: 'POST',
+    });
+  }
+
+  // ============================================================================
+  // Scraper API
+  // ============================================================================
+
+  async triggerScrape(request?: ScrapeRequest): Promise<ScrapeResponse> {
+    return this.fetch<ScrapeResponse>('/api/v1/scrape', {
+      method: 'POST',
+      body: request ? JSON.stringify(request) : undefined,
+    });
+  }
+
+  async getScraperStats(): Promise<ScraperStats> {
+    return this.fetch<ScraperStats>('/api/v1/scraper/stats');
+  }
+
+  async getSources(): Promise<{ sources: SourceInfo[] }> {
+    return this.fetch<{ sources: SourceInfo[] }>('/api/v1/sources');
+  }
+
+  async getCategories(): Promise<{ categories: CategoryInfo[] }> {
+    return this.fetch<{ categories: CategoryInfo[] }>('/api/v1/categories');
+  }
+
+  // ============================================================================
+  // AI API
+  // ============================================================================
+
+  async getArticleEnrichment(articleId: number): Promise<{
+    ai_summary?: string;
+    ai_sentiment?: string;
+    ai_sentiment_score?: number;
+    ai_keywords?: string[];
+    ai_entities?: any[];
+    ai_category?: string;
+    stock_tickers?: string[];
+  }> {
+    return this.fetch<{
+      ai_summary?: string;
+      ai_sentiment?: string;
+      ai_sentiment_score?: number;
+      ai_keywords?: string[];
+      ai_entities?: any[];
+      ai_category?: string;
+      stock_tickers?: string[];
+    }>(`/api/v1/articles/${articleId}/enrichment`);
+  }
+
+  async processArticle(articleId: number): Promise<{
+    message: string;
+    article: Article;
+  }> {
+    return this.fetch<{
+      message: string;
+      article: Article;
+    }>(`/api/v1/articles/${articleId}/process`, {
+      method: 'POST',
+    });
+  }
+
+  async getSentimentStats(): Promise<{
+    total_processed: number;
+    by_sentiment: {
+      positive: number;
+      neutral: number;
+      negative: number;
+    };
+    avg_sentiment_score: number;
+  }> {
+    return this.fetch<{
+      total_processed: number;
+      by_sentiment: {
+        positive: number;
+        neutral: number;
+        negative: number;
+      };
+      avg_sentiment_score: number;
+    }>('/api/v1/ai/sentiment/stats');
+  }
+
+  async getAITrending(): Promise<{
+    topics: Array<{
+      keyword: string;
+      count: number;
+      sentiment: number;
+    }>;
+  }> {
+    return this.fetch<{
+      topics: Array<{
+        keyword: string;
+        count: number;
+        sentiment: number;
+      }>;
+    }>('/api/v1/ai/trending');
+  }
+
+  async getArticlesByEntity(entityName: string): Promise<ArticleListResponse> {
+    const encodedEntity = encodeURIComponent(entityName);
+    return this.fetch<ArticleListResponse>(`/api/v1/ai/entity/${encodedEntity}`);
+  }
+
+  async sendChatMessage(request: ChatRequest): Promise<ChatResponse> {
+    return this.fetch<ChatResponse>('/api/v1/ai/chat', {
       method: 'POST',
       body: JSON.stringify(request),
     });
   }
 
-  // Email API methods
-  async getEmailStats(): Promise<APIResponse<EmailStats>> {
-    return this.fetchWithErrorHandling<EmailStats>('/api/v1/email/stats');
+  // ============================================================================
+  // Stocks API
+  // ============================================================================
+
+  async getStockQuote(symbol: string): Promise<StockQuote> {
+    return this.fetch<StockQuote>(`/api/v1/stocks/quote/${symbol}`);
   }
 
-  async fetchExistingEmails(): Promise<APIResponse<EmailFetchResponse>> {
-    return this.fetchWithErrorHandling<EmailFetchResponse>('/api/v1/email/fetch-existing', {
-      method: 'POST',
-    });
+  async getStockProfile(symbol: string): Promise<StockProfile> {
+    return this.fetch<StockProfile>(`/api/v1/stocks/profile/${symbol}`);
   }
 
-  // Stock API
-  async getStockQuote(symbol: string): Promise<APIResponse<StockQuote>> {
-    const response = await this.fetchWithErrorHandling<StockQuote>(`/api/v1/stocks/quote/${symbol}`);
-
-    // Handle unwrapped response from backend
-    if (response && 'symbol' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as StockQuote,
-        request_id: `stock-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<StockQuote>;
-    }
-
-    return response;
+  async searchSymbols(query: string): Promise<SymbolSearchResponse> {
+    const queryString = this.buildQueryString({ q: query });
+    return this.fetch<SymbolSearchResponse>(`/api/v1/stocks/search${queryString}`);
   }
 
-  async getMultipleQuotes(symbols: string[]): Promise<APIResponse<Record<string, StockQuote>>> {
-    const response = await this.fetchWithErrorHandling<Record<string, StockQuote>>('/api/v1/stocks/quotes', {
-      method: 'POST',
-      body: JSON.stringify({ symbols }),
-    });
-
-    // Handle unwrapped response from backend
-    if (response && typeof response === 'object' && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as Record<string, StockQuote>,
-        request_id: `stocks-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<Record<string, StockQuote>>;
-    }
-
-    return response;
+  async getEarningsCalendar(): Promise<EarningsCalendarResponse> {
+    return this.fetch<EarningsCalendarResponse>('/api/v1/stocks/earnings');
   }
 
-  async getStockProfile(symbol: string): Promise<APIResponse<StockProfile>> {
-    const response = await this.fetchWithErrorHandling<StockProfile>(`/api/v1/stocks/profile/${symbol}`);
-
-    // Handle unwrapped response from backend
-    if (response && 'symbol' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as StockProfile,
-        request_id: `profile-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<StockProfile>;
-    }
-
-    return response;
-  }
-
-  async getArticlesByTicker(symbol: string, limit: number = 10): Promise<APIResponse<Article[]>> {
-    const queryString = this.buildQueryString({ limit });
-    return this.fetchWithErrorHandling<Article[]>(`/api/v1/articles/by-ticker/${symbol}${queryString}`);
-  }
-
-  // Historical Stock Data
   async getHistoricalData(
     symbol: string,
     from?: string,
     to?: string
-  ): Promise<APIResponse<HistoricalDataResponse>> {
+  ): Promise<HistoricalDataResponse> {
     const params: Record<string, any> = {};
     if (from) params.from = from;
     if (to) params.to = to;
-
     const queryString = this.buildQueryString(params);
-    const response = await this.fetchWithErrorHandling<HistoricalDataResponse>(
-      `/api/v1/stocks/historical/${symbol}${queryString}`
-    );
-
-    // Handle unwrapped response from backend
-    if (response && 'symbol' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as HistoricalDataResponse,
-        request_id: `historical-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<HistoricalDataResponse>;
-    }
-
-    return response;
+    return this.fetch<HistoricalDataResponse>(`/api/v1/stocks/historical/${symbol}${queryString}`);
   }
 
-  // Financial Metrics
-  async getFinancialMetrics(symbol: string): Promise<APIResponse<FinancialMetrics>> {
-    const response = await this.fetchWithErrorHandling<FinancialMetrics>(
-      `/api/v1/stocks/metrics/${symbol}`
-    );
-
-    // Handle unwrapped response from backend
-    if (response && 'symbol' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as FinancialMetrics,
-        request_id: `metrics-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<FinancialMetrics>;
-    }
-
-    return response;
+  async getFinancialMetrics(symbol: string): Promise<FinancialMetrics> {
+    return this.fetch<FinancialMetrics>(`/api/v1/stocks/metrics/${symbol}`);
   }
 
-  // Stock News
-  async getStockNews(symbol: string, limit: number = 10): Promise<APIResponse<StockNewsResponse>> {
+  async getStockNews(symbol: string, limit: number = 10): Promise<StockNewsResponse> {
     const queryString = this.buildQueryString({ limit });
-    const response = await this.fetchWithErrorHandling<StockNewsResponse>(
-      `/api/v1/stocks/news/${symbol}${queryString}`
-    );
-
-    // Handle unwrapped response from backend
-    if (response && 'symbol' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as StockNewsResponse,
-        request_id: `news-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<StockNewsResponse>;
-    }
-
-    return response;
+    return this.fetch<StockNewsResponse>(`/api/v1/stocks/news/${symbol}${queryString}`);
   }
 
-  // Earnings Calendar
-  async getEarningsCalendar(from?: string, to?: string): Promise<APIResponse<EarningsCalendarResponse>> {
-    const params: Record<string, any> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-
-    const queryString = this.buildQueryString(params);
-    const response = await this.fetchWithErrorHandling<EarningsCalendarResponse>(
-      `/api/v1/stocks/earnings${queryString}`
-    );
-
-    // Handle unwrapped response from backend
-    if (response && 'from' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as EarningsCalendarResponse,
-        request_id: `earnings-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<EarningsCalendarResponse>;
-    }
-
-    return response;
+  async getMultipleQuotes(symbols: string[]): Promise<Record<string, StockQuote>> {
+    return this.fetch<Record<string, StockQuote>>('/api/v1/stocks/quotes', {
+      method: 'POST',
+      body: JSON.stringify({ symbols }),
+    });
   }
 
-  // Symbol Search
-  async searchSymbols(query: string, limit: number = 10): Promise<APIResponse<SymbolSearchResponse>> {
-    const queryString = this.buildQueryString({ q: query, limit });
-    const response = await this.fetchWithErrorHandling<SymbolSearchResponse>(
-      `/api/v1/stocks/search${queryString}`
-    );
-
-    // Handle unwrapped response from backend
-    if (response && 'query' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as SymbolSearchResponse,
-        request_id: `search-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<SymbolSearchResponse>;
-    }
-
-    return response;
+  async getMarketGainers(): Promise<MarketMoversResponse> {
+    return this.fetch<MarketMoversResponse>('/api/v1/stocks/market/gainers');
   }
 
-  // Market Performance Endpoints
-  async getMarketGainers(): Promise<APIResponse<MarketMoversResponse>> {
-    const response = await this.fetchWithErrorHandling<MarketMoversResponse>(
-      '/api/v1/stocks/market/gainers'
-    );
-
-    if (response && 'gainers' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as MarketMoversResponse,
-        request_id: `gainers-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<MarketMoversResponse>;
-    }
-
-    return response;
+  async getMarketLosers(): Promise<MarketMoversResponse> {
+    return this.fetch<MarketMoversResponse>('/api/v1/stocks/market/losers');
   }
 
-  async getMarketLosers(): Promise<APIResponse<MarketMoversResponse>> {
-    const response = await this.fetchWithErrorHandling<MarketMoversResponse>(
-      '/api/v1/stocks/market/losers'
-    );
-
-    if (response && 'losers' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as MarketMoversResponse,
-        request_id: `losers-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<MarketMoversResponse>;
-    }
-
-    return response;
+  async getMarketActives(): Promise<MarketMoversResponse> {
+    return this.fetch<MarketMoversResponse>('/api/v1/stocks/market/actives');
   }
 
-  async getMarketActives(): Promise<APIResponse<MarketMoversResponse>> {
-    const response = await this.fetchWithErrorHandling<MarketMoversResponse>(
-      '/api/v1/stocks/market/actives'
-    );
-
-    if (response && 'actives' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as MarketMoversResponse,
-        request_id: `actives-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<MarketMoversResponse>;
-    }
-
-    return response;
+  async getSectors(): Promise<SectorsResponse> {
+    return this.fetch<SectorsResponse>('/api/v1/stocks/sectors');
   }
 
-  async getSectors(): Promise<APIResponse<SectorsResponse>> {
-    const response = await this.fetchWithErrorHandling<SectorsResponse>(
-      '/api/v1/stocks/sectors'
-    );
-
-    if (response && 'sectors' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as SectorsResponse,
-        request_id: `sectors-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<SectorsResponse>;
-    }
-
-    return response;
-  }
-
-  // Analyst Data Endpoints
-  async getAnalystRatings(symbol: string, limit: number = 20): Promise<APIResponse<AnalystRatingsResponse>> {
+  async getAnalystRatings(symbol: string, limit: number = 20): Promise<AnalystRatingsResponse> {
     const queryString = this.buildQueryString({ limit });
-    const response = await this.fetchWithErrorHandling<AnalystRatingsResponse>(
-      `/api/v1/stocks/ratings/${symbol}${queryString}`
-    );
-
-    if (response && 'symbol' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as AnalystRatingsResponse,
-        request_id: `ratings-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<AnalystRatingsResponse>;
-    }
-
-    return response;
+    return this.fetch<AnalystRatingsResponse>(`/api/v1/stocks/ratings/${symbol}${queryString}`);
   }
 
-  async getPriceTarget(symbol: string): Promise<APIResponse<PriceTarget>> {
-    const response = await this.fetchWithErrorHandling<PriceTarget>(
-      `/api/v1/stocks/target/${symbol}`
-    );
-
-    if (response && 'symbol' in response && !('success' in response)) {
-      return {
-        success: true,
-        data: response as any as PriceTarget,
-        request_id: `target-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      } as APIResponse<PriceTarget>;
-    }
-
-    return response;
+  async getPriceTarget(symbol: string): Promise<PriceTarget> {
+    return this.fetch<PriceTarget>(`/api/v1/stocks/target/${symbol}`);
   }
 
-  // Stock Stats
-  async getStockStats(): Promise<APIResponse<StockStatsResponse>> {
-    return this.fetchWithErrorHandling<StockStatsResponse>('/api/v1/stocks/stats');
+  async getStockStats(): Promise<StockStatsResponse> {
+    return this.fetch<StockStatsResponse>('/api/v1/stocks/stats');
+  }
+
+  // ============================================================================
+  // Cache API
+  // ============================================================================
+
+  async getCacheStats(): Promise<CacheStats> {
+    return this.fetch<CacheStats>('/api/v1/cache/stats');
+  }
+
+  async invalidateCache(request?: CacheInvalidateRequest): Promise<CacheInvalidateResponse> {
+    return this.fetch<CacheInvalidateResponse>('/api/v1/cache/invalidate', {
+      method: 'POST',
+      body: request ? JSON.stringify(request) : undefined,
+    });
   }
 }
 

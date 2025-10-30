@@ -122,7 +122,7 @@ export function EmailFetchControls() {
                 )}
 
                 {/* Success State */}
-                {hasSuccess && fetchMutation.data?.data && (
+                {hasSuccess && fetchMutation.data && (
                     <div className={statusBannerVariants({ status: 'success' })}>
                         <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                         <div className="flex-1">
@@ -130,10 +130,9 @@ export function EmailFetchControls() {
                                 Successfully imported emails
                             </p>
                             <p className={statusDetailVariants({ status: 'success' })}>
-                                Created {fetchMutation.data.data.articles_created} articles from existing emails
+                                Fetched {fetchMutation.data.count} emails
                             </p>
                         </div>
-                        <Badge variant="success">{fetchMutation.data.data.status}</Badge>
                     </div>
                 )}
 

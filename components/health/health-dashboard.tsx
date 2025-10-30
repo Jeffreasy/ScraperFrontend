@@ -75,10 +75,10 @@ export function HealthDashboard() {
     const { data: scraperStats } = useScraperStats();
 
     if (isLoading) return <LoadingState />;
-    if (isError || !health?.data) return <ErrorState />;
+    if (isError || !health) return <ErrorState />;
 
-    const healthData = health.data;
-    const metricsData = metrics?.data;
+    const healthData = health;
+    const metricsData = metrics;
 
     return (
         <div className={spacing.lg}>
@@ -90,10 +90,10 @@ export function HealthDashboard() {
             <ComponentsGrid healthData={healthData} />
 
             {/* Browser Pool Stats */}
-            {scraperStats?.data?.browser_pool && (
+            {scraperStats?.browser_pool && (
                 <>
                     <SectionHeader title="Browser Scraping" />
-                    <BrowserScrapingGrid scraperStats={scraperStats.data} />
+                    <BrowserScrapingGrid scraperStats={scraperStats} />
                 </>
             )}
 
@@ -227,12 +227,12 @@ function BrowserScrapingGrid({ scraperStats }: { scraperStats: any }) {
                             <MetricRow
                                 label="Success rate"
                                 value={`${scraperStats.content_extraction.total > 0
-                                        ? Math.round(
-                                            (scraperStats.content_extraction.extracted /
-                                                scraperStats.content_extraction.total) *
-                                            100
-                                        )
-                                        : 0
+                                    ? Math.round(
+                                        (scraperStats.content_extraction.extracted /
+                                            scraperStats.content_extraction.total) *
+                                        100
+                                    )
+                                    : 0
                                     }%`}
                             />
                         </div>

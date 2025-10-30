@@ -1,26 +1,28 @@
 import type {
-    APIResponse,
     Article,
-    ArticleFilters,
+    ArticleFilter,
+    ArticleListResponse,
     SearchFilters,
     SourceInfo,
-    CategoryInfo,
-    StatsResponse,
+    HealthStatus,
     HealthResponse,
     LivenessResponse,
     ReadinessResponse,
     MetricsResponse,
     ScrapeRequest,
     ScrapeResponse,
-    RateLimitHeaders,
-    AIEnrichment,
-    SentimentStats,
-    TrendingTopicsResponse,
-    ProcessorStats,
-    ChatRequest,
-    ChatResponse,
+    TrendingResponse,
+    SentimentTrendsResponse,
+    HotEntitiesResponse,
+    EntitySentimentResponse,
+    AnalyticsOverview,
+    ArticleStatsResponse,
     StockQuote,
     StockProfile,
+    CategoryInfo,
+    ChatRequest,
+    ChatResponse,
+    ScraperStats,
 } from '@/lib/types/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -187,7 +189,7 @@ class AdvancedAPIClient {
         config: RequestConfig,
         response?: Response,
         error?: any
-    ): Promise<APIResponse<T>> {
+    ): Promise<T> {
         // Initialize retry count
         config._retryCount = config._retryCount || 0;
 
@@ -221,7 +223,7 @@ class AdvancedAPIClient {
     private async fetchWithErrorHandling<T>(
         url: string,
         config: RequestConfig = {}
-    ): Promise<APIResponse<T>> {
+    ): Promise<T> {
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             'X-Request-ID': this.generateRequestID(),
@@ -245,13 +247,6 @@ class AdvancedAPIClient {
                 // Log request
                 console.log(`[API] ${config.method || 'GET'} ${url} - ${response.status}`);
 
-                // Extract rate limit headers
-                const rateLimitHeaders: RateLimitHeaders = {
-                    limit: parseInt(response.headers.get('X-RateLimit-Limit') || '0'),
-                    remaining: parseInt(response.headers.get('X-RateLimit-Remaining') || '0'),
-                    reset: parseInt(response.headers.get('X-RateLimit-Reset') || '0'),
-                };
-
                 // Handle non-OK responses
                 if (!response.ok) {
                     // Try to parse error response
@@ -267,11 +262,7 @@ class AdvancedAPIClient {
                     }
                 }
 
-                const data: APIResponse<T> = await response.json();
-
-                // Attach rate limit info to response
-                (data as any).rateLimitHeaders = rateLimitHeaders;
-
+                const data: T = await response.json();
                 return data;
             };
 
@@ -313,7 +304,7 @@ class AdvancedAPIClient {
         url: string,
         params?: Record<string, any>,
         config?: RequestConfig
-    ): Promise<APIResponse<T>> {
+    ): Promise<T> {
         const queryString = params ? this.buildQueryString(params) : '';
         const fullPath = `${url}${queryString}`;
 
@@ -331,106 +322,252 @@ class AdvancedAPIClient {
     // Health Checks
     // ============================================
 
-    async healthCheck(): Promise<APIResponse<HealthResponse>> {
-        return this.getWithDedup<HealthResponse>('/health', undefined, {
+    async healthCheck(): Promise<HealthResponse> {
+        // Backend wraps response in { success: true, data: {...} }
+        const response = await this.getWithDedup<{ success: boolean; data: HealthResponse }>('/health', undefined, {
             skipCircuitBreaker: true // Always check health even if circuit is open
         });
+        return response.data;
     }
 
-    async livenessCheck(): Promise<APIResponse<LivenessResponse>> {
+    async livenessCheck(): Promise<LivenessResponse> {
+        // Liveness probe returns direct response (not wrapped)
         return this.fetchWithErrorHandling<LivenessResponse>('/health/live', {
             skipCircuitBreaker: true,
             skipRetry: true,
         });
     }
 
-    async readinessCheck(): Promise<APIResponse<ReadinessResponse>> {
+    async readinessCheck(): Promise<ReadinessResponse> {
+        // Readiness probe returns direct response (not wrapped)
         return this.fetchWithErrorHandling<ReadinessResponse>('/health/ready', {
             skipCircuitBreaker: true,
         });
     }
 
-    async getMetrics(): Promise<APIResponse<MetricsResponse>> {
-        return this.getWithDedup<MetricsResponse>('/health/metrics');
+    async getMetrics(): Promise<MetricsResponse> {
+        // Backend wraps response in { success: true, data: {...} }
+        const response = await this.getWithDedup<{ success: boolean; data: MetricsResponse }>('/health/metrics');
+        return response.data;
     }
 
     // ============================================
     // Articles
     // ============================================
 
-    async getArticles(filters?: ArticleFilters): Promise<APIResponse<Article[]>> {
-        return this.getWithDedup<Article[]>('/api/v1/articles', filters);
+    async getArticles(filters?: ArticleFilter): Promise<ArticleListResponse> {
+        return this.getWithDedup<ArticleListResponse>('/api/v1/articles', filters);
     }
 
-    async getArticle(id: number): Promise<APIResponse<Article>> {
-        return this.getWithDedup<Article>(`/api/v1/articles/${id}`);
+    async getArticle(id: number): Promise<{ article: Article }> {
+        return this.getWithDedup<{ article: Article }>(`/api/v1/articles/${id}`);
     }
 
-    async searchArticles(filters: SearchFilters): Promise<APIResponse<Article[]>> {
-        return this.getWithDedup<Article[]>('/api/v1/articles/search', filters);
+    async searchArticles(filters: SearchFilters): Promise<ArticleListResponse> {
+        return this.getWithDedup<ArticleListResponse>('/api/v1/articles/search', filters);
     }
 
-    async getArticleStats(): Promise<APIResponse<StatsResponse>> {
-        return this.getWithDedup<StatsResponse>('/api/v1/articles/stats');
+    async getArticleStats(): Promise<Record<string, number>> {
+        return this.getWithDedup<Record<string, number>>('/api/v1/articles/stats');
+    }
+
+    async getArticlesByTicker(symbol: string, limit: number = 10): Promise<ArticleListResponse> {
+        return this.getWithDedup<ArticleListResponse>(`/api/v1/articles/by-ticker/${symbol}`, { limit });
+    }
+
+    // ============================================
+    // Analytics API
+    // ============================================
+
+    async getTrendingKeywords(
+        hours: number = 24,
+        minArticles: number = 3,
+        limit: number = 20
+    ): Promise<TrendingResponse> {
+        return this.getWithDedup<TrendingResponse>('/api/v1/analytics/trending', {
+            hours,
+            min_articles: minArticles,
+            limit,
+        });
+    }
+
+    async getSentimentTrends(source?: string): Promise<SentimentTrendsResponse> {
+        const params = source ? { source } : undefined;
+        return this.getWithDedup<SentimentTrendsResponse>('/api/v1/analytics/sentiment-trends', params);
+    }
+
+    async getHotEntities(entityType?: string, limit: number = 50): Promise<HotEntitiesResponse> {
+        const params: Record<string, any> = { limit };
+        if (entityType) params.entity_type = entityType;
+        return this.getWithDedup<HotEntitiesResponse>('/api/v1/analytics/hot-entities', params);
+    }
+
+    async getEntitySentiment(entity: string, days: number = 30): Promise<EntitySentimentResponse> {
+        return this.getWithDedup<EntitySentimentResponse>('/api/v1/analytics/entity-sentiment', {
+            entity,
+            days,
+        });
+    }
+
+    async getAnalyticsOverview(): Promise<AnalyticsOverview> {
+        return this.getWithDedup<AnalyticsOverview>('/api/v1/analytics/overview');
+    }
+
+    async getArticleStatsBySource(): Promise<ArticleStatsResponse> {
+        return this.getWithDedup<ArticleStatsResponse>('/api/v1/analytics/article-stats');
     }
 
     // ============================================
     // Sources
     // ============================================
 
-    async getSources(): Promise<APIResponse<SourceInfo[]>> {
-        return this.getWithDedup<SourceInfo[]>('/api/v1/sources');
+    async getSources(): Promise<{ sources: SourceInfo[] }> {
+        return this.getWithDedup<{ sources: SourceInfo[] }>('/api/v1/sources');
     }
 
     // ============================================
     // Categories
     // ============================================
 
-    async getCategories(): Promise<APIResponse<CategoryInfo[]>> {
-        return this.getWithDedup<CategoryInfo[]>('/api/v1/categories');
+    async getCategories(): Promise<{ categories: CategoryInfo[] }> {
+        return this.getWithDedup<{ categories: CategoryInfo[] }>('/api/v1/categories');
     }
+    // ============================================
+    // Email API
+    // ============================================
+
+    async getEmailStats(): Promise<{
+        total_emails: number;
+        processed_emails: number;
+        pending_emails: number;
+        failed_emails: number;
+        articles_created: number;
+    }> {
+        return this.getWithDedup<{
+            total_emails: number;
+            processed_emails: number;
+            pending_emails: number;
+            failed_emails: number;
+            articles_created: number;
+        }>('/api/v1/email/stats');
+    }
+
+    async fetchExistingEmails(): Promise<{
+        message: string;
+        count: number;
+    }> {
+        return this.fetchWithErrorHandling<{
+            message: string;
+            count: number;
+        }>('/api/v1/email/fetch-existing', {
+            method: 'POST',
+        });
+    }
+
+    // ============================================
+    // Content Extraction
+    // ============================================
+
+    async extractArticleContent(articleId: number): Promise<{
+        message: string;
+        article: Article;
+    }> {
+        return this.fetchWithErrorHandling<{
+            message: string;
+            article: Article;
+        }>(`/api/v1/articles/${articleId}/extract-content`, {
+            method: 'POST',
+        });
+    }
+
 
     // ============================================
     // Scraper
     // ============================================
 
-    async triggerScrape(request?: ScrapeRequest): Promise<APIResponse<ScrapeResponse>> {
+    async triggerScrape(request?: ScrapeRequest): Promise<ScrapeResponse> {
         return this.fetchWithErrorHandling<ScrapeResponse>('/api/v1/scrape', {
             method: 'POST',
             body: request ? JSON.stringify(request) : undefined,
         });
     }
 
-    async getScraperStats(): Promise<APIResponse<any>> {
-        return this.getWithDedup<any>('/api/v1/scraper/stats');
+    async getScraperStats(): Promise<ScraperStats> {
+        // Backend wraps response in { success: true, data: {...} }
+        const response = await this.getWithDedup<{ success: boolean; data: ScraperStats }>('/api/v1/scraper/stats');
+        return response.data;
     }
 
     // ============================================
     // AI Enrichment
     // ============================================
 
-    async getArticleEnrichment(articleId: number): Promise<APIResponse<AIEnrichment>> {
-        return this.getWithDedup<AIEnrichment>(`/api/v1/articles/${articleId}/enrichment`);
+    async getArticleEnrichment(articleId: number): Promise<{
+        ai_summary?: string;
+        ai_sentiment?: string;
+        ai_sentiment_score?: number;
+        ai_keywords?: string[];
+        ai_entities?: any[];
+        ai_category?: string;
+        stock_tickers?: string[];
+    }> {
+        return this.getWithDedup<{
+            ai_summary?: string;
+            ai_sentiment?: string;
+            ai_sentiment_score?: number;
+            ai_keywords?: string[];
+            ai_entities?: any[];
+            ai_category?: string;
+            stock_tickers?: string[];
+        }>(`/api/v1/articles/${articleId}/enrichment`);
     }
 
     async getSentimentStats(
         source?: string,
         startDate?: string,
         endDate?: string
-    ): Promise<APIResponse<SentimentStats>> {
+    ): Promise<{
+        total_processed: number;
+        by_sentiment: {
+            positive: number;
+            neutral: number;
+            negative: number;
+        };
+        avg_sentiment_score: number;
+    }> {
         const params: Record<string, any> = {};
         if (source) params.source = source;
         if (startDate) params.start_date = startDate;
         if (endDate) params.end_date = endDate;
 
-        return this.getWithDedup<SentimentStats>('/api/v1/ai/sentiment/stats', params);
+        return this.getWithDedup<{
+            total_processed: number;
+            by_sentiment: {
+                positive: number;
+                neutral: number;
+                negative: number;
+            };
+            avg_sentiment_score: number;
+        }>('/api/v1/ai/sentiment/stats', params);
     }
 
     async getTrendingTopics(
         hours: number = 24,
         minArticles: number = 3
-    ): Promise<APIResponse<TrendingTopicsResponse>> {
-        return this.getWithDedup<TrendingTopicsResponse>('/api/v1/ai/trending', {
+    ): Promise<{
+        topics: Array<{
+            keyword: string;
+            count: number;
+            sentiment: number;
+        }>;
+    }> {
+        return this.getWithDedup<{
+            topics: Array<{
+                keyword: string;
+                count: number;
+                sentiment: number;
+            }>;
+        }>('/api/v1/ai/trending', {
             hours,
             min_articles: minArticles,
         });
@@ -440,39 +577,45 @@ class AdvancedAPIClient {
         entityName: string,
         entityType: 'persons' | 'organizations' | 'locations' = 'persons',
         limit: number = 50
-    ): Promise<APIResponse<Article[]>> {
+    ): Promise<ArticleListResponse> {
         const encodedEntity = encodeURIComponent(entityName);
-        return this.getWithDedup<Article[]>(`/api/v1/ai/entity/${encodedEntity}`, {
+        return this.getWithDedup<ArticleListResponse>(`/api/v1/ai/entity/${encodedEntity}`, {
             type: entityType,
             limit,
         });
     }
 
-    async getProcessorStats(): Promise<APIResponse<ProcessorStats>> {
-        return this.getWithDedup<ProcessorStats>('/api/v1/ai/processor/stats');
+    async getProcessorStats(): Promise<{
+        is_running: boolean;
+        process_count: number;
+        last_run: string;
+    }> {
+        return this.getWithDedup<{
+            is_running: boolean;
+            process_count: number;
+            last_run: string;
+        }>('/api/v1/ai/processor/stats');
     }
 
-    async processArticle(articleId: number): Promise<APIResponse<{
+    async processArticle(articleId: number): Promise<{
         message: string;
-        article_id: number;
-        enrichment: AIEnrichment;
-    }>> {
+        article: Article;
+    }> {
         return this.fetchWithErrorHandling<{
             message: string;
-            article_id: number;
-            enrichment: AIEnrichment;
+            article: Article;
         }>(`/api/v1/articles/${articleId}/process`, {
             method: 'POST',
         });
     }
 
-    async triggerBatchProcessing(): Promise<APIResponse<{
+    async triggerBatchProcessing(): Promise<{
         message: string;
         total_processed: number;
         success_count: number;
         failure_count: number;
         duration: string;
-    }>> {
+    }> {
         return this.fetchWithErrorHandling<{
             message: string;
             total_processed: number;
@@ -488,7 +631,7 @@ class AdvancedAPIClient {
     // AI Chat
     // ============================================
 
-    async sendChatMessage(request: ChatRequest): Promise<APIResponse<ChatResponse>> {
+    async sendChatMessage(request: ChatRequest): Promise<ChatResponse> {
         return this.fetchWithErrorHandling<ChatResponse>('/api/v1/ai/chat', {
             method: 'POST',
             body: JSON.stringify(request),
@@ -500,59 +643,19 @@ class AdvancedAPIClient {
     // Stock API
     // ============================================
 
-    async getStockQuote(symbol: string): Promise<APIResponse<StockQuote>> {
-        const response = await this.getWithDedup<StockQuote>(`/api/v1/stocks/quote/${symbol}`);
-
-        // Handle unwrapped response from backend
-        if (response && 'symbol' in response && !('success' in response)) {
-            return {
-                success: true,
-                data: response as any as StockQuote,
-                request_id: `stock-${Date.now()}`,
-                timestamp: new Date().toISOString()
-            } as APIResponse<StockQuote>;
-        }
-
-        return response;
+    async getStockQuote(symbol: string): Promise<StockQuote> {
+        return this.getWithDedup<StockQuote>(`/api/v1/stocks/quote/${symbol}`);
     }
 
-    async getMultipleQuotes(symbols: string[]): Promise<APIResponse<Record<string, StockQuote>>> {
-        const response = await this.fetchWithErrorHandling<Record<string, StockQuote>>('/api/v1/stocks/quotes', {
+    async getMultipleQuotes(symbols: string[]): Promise<Record<string, StockQuote>> {
+        return this.fetchWithErrorHandling<Record<string, StockQuote>>('/api/v1/stocks/quotes', {
             method: 'POST',
             body: JSON.stringify({ symbols }),
         });
-
-        // Handle unwrapped response from backend
-        if (response && typeof response === 'object' && !('success' in response)) {
-            return {
-                success: true,
-                data: response as any as Record<string, StockQuote>,
-                request_id: `stocks-${Date.now()}`,
-                timestamp: new Date().toISOString()
-            } as APIResponse<Record<string, StockQuote>>;
-        }
-
-        return response;
     }
 
-    async getStockProfile(symbol: string): Promise<APIResponse<StockProfile>> {
-        const response = await this.getWithDedup<StockProfile>(`/api/v1/stocks/profile/${symbol}`);
-
-        // Handle unwrapped response from backend
-        if (response && 'symbol' in response && !('success' in response)) {
-            return {
-                success: true,
-                data: response as any as StockProfile,
-                request_id: `profile-${Date.now()}`,
-                timestamp: new Date().toISOString()
-            } as APIResponse<StockProfile>;
-        }
-
-        return response;
-    }
-
-    async getArticlesByTicker(symbol: string, limit: number = 10): Promise<APIResponse<Article[]>> {
-        return this.getWithDedup<Article[]>(`/api/v1/articles/by-ticker/${symbol}`, { limit });
+    async getStockProfile(symbol: string): Promise<StockProfile> {
+        return this.getWithDedup<StockProfile>(`/api/v1/stocks/profile/${symbol}`);
     }
 
     // ============================================

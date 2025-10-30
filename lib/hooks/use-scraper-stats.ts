@@ -2,7 +2,7 @@
 
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { advancedApiClient } from '@/lib/api/advanced-client';
-import type { APIResponse, ScraperStatsResponse } from '@/lib/types/api';
+import type { ScraperStats } from '@/lib/types/api';
 
 /**
  * Hook for fetching scraper statistics including:
@@ -12,7 +12,7 @@ import type { APIResponse, ScraperStatsResponse } from '@/lib/types/api';
  * - Browser pool status (if enabled)
  */
 export const useScraperStats = (
-    options?: Omit<UseQueryOptions<APIResponse<ScraperStatsResponse>>, 'queryKey' | 'queryFn'>
+    options?: Omit<UseQueryOptions<ScraperStats>, 'queryKey' | 'queryFn'>
 ) => {
     return useQuery({
         queryKey: ['scraper', 'stats'],

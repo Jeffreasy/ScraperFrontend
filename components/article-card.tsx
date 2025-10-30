@@ -19,12 +19,17 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContentScrapingModal } from '@/components/content-scraping-modal';
-import { ArticleStockTickers } from '@/components/stock';
+import { ArticleStockTickers, ArticleStockTickersEnhanced } from '@/components/stock';
 import { useArticleStockTickers } from '@/lib/hooks/use-article-stock-tickers';
 import { useArticleAI } from '@/lib/hooks/use-article-ai';
+import { useBatchStockQuotes } from '@/lib/hooks/use-batch-stock-quotes';
 import { SentimentBadge } from '@/components/ai/sentiment-badge';
 import { EntityChip } from '@/components/ai/entity-chip';
 import { KeywordTag } from '@/components/ai/keyword-tag';
+import { TrendingBadge, TrendingIndicator } from '@/components/article';
+import { EnhancedSourceBadge } from '@/components/article';
+import { CompactRelatedArticles } from '@/components/article';
+import { CompactSentimentTimeline } from '@/components/article';
 import {
   cn,
   getSourceColor,
@@ -42,8 +47,10 @@ import {
 
 interface ArticleCardProps {
   article: Article;
+  size?: 'compact' | 'default' | 'large';
   showAI?: boolean;
   showScraping?: boolean;
+  showEnhancedStocks?: boolean; // NEW: Enable enhanced stock features
   onEntityClick?: (entity: string, type: 'persons' | 'organizations' | 'locations') => void;
 }
 
@@ -51,14 +58,78 @@ interface ArticleCardProps {
 // COMPONENT VARIANTS
 // ============================================================================
 
+const articleCardVariants = cva(
+  ['overflow-hidden'],
+  {
+    variants: {
+      size: {
+        compact: '',
+        default: '',
+        large: '',
+      },
+    },
+    defaultVariants: {
+      size: 'default',
+    },
+  }
+);
+
 const articleImageVariants = cva(
   ['relative w-full overflow-hidden bg-muted'],
   {
     variants: {
       size: {
+        compact: 'h-32',
         default: 'h-48',
-        sm: 'h-40',
-        lg: 'h-56',
+        large: 'h-64',
+      },
+    },
+    defaultVariants: {
+      size: 'default',
+    },
+  }
+);
+
+const articleTitleVariants = cva(
+  ['font-semibold leading-tight group-hover:text-primary transition-colors'],
+  {
+    variants: {
+      size: {
+        compact: 'text-base line-clamp-2',
+        default: 'text-xl line-clamp-2',
+        large: 'text-2xl line-clamp-3',
+      },
+    },
+    defaultVariants: {
+      size: 'default',
+    },
+  }
+);
+
+const articleSummaryVariants = cva(
+  ['text-muted-foreground'],
+  {
+    variants: {
+      size: {
+        compact: 'text-xs line-clamp-2',
+        default: 'text-sm line-clamp-3',
+        large: 'text-base line-clamp-4',
+      },
+    },
+    defaultVariants: {
+      size: 'default',
+    },
+  }
+);
+
+const articlePaddingVariants = cva(
+  [],
+  {
+    variants: {
+      size: {
+        compact: 'p-3',
+        default: 'p-6',
+        large: 'p-8',
       },
     },
     defaultVariants: {
@@ -142,8 +213,10 @@ function truncateText(text: string, maxLength: number): string {
 
 export function ArticleCard({
   article,
+  size = 'default',
   showAI = false,
   showScraping = true,
+  showEnhancedStocks = false,
   onEntityClick,
 }: ArticleCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -151,11 +224,21 @@ export function ArticleCard({
   const { tickers, hasTickers } = useArticleStockTickers(article);
   const { data: ai, isLoading: aiLoading } = useArticleAI(article.id, showAI && aiExpanded);
 
+  // NEW: Gebruik batch stock quotes voor betere performance
+  const tickerSymbols = tickers.map(t => typeof t === 'string' ? t : t.symbol);
+  const { data: stockQuotes } = useBatchStockQuotes(tickerSymbols);
+
   return (
-    <Card variant="default" hover="lift" className="overflow-hidden">
+    <Card variant="default" hover="lift" className={articleCardVariants({ size })}>
+      {/* NEW: Trending indicator */}
+      {size !== 'compact' && (
+        <div className="absolute top-2 right-2 z-10">
+          <TrendingBadge keywords={article.keywords} variant="icon" />
+        </div>
+      )}
       {/* Article Image */}
       {article.image_url && (
-        <div className={articleImageVariants()}>
+        <div className={articleImageVariants({ size })}>
           <Image
             src={article.image_url}
             alt={article.title}
@@ -171,12 +254,10 @@ export function ArticleCard({
       )}
 
       {/* Header */}
-      <CardHeader className="pb-3">
-        <div className={cn(flexPatterns.between, 'mb-2', gap.sm)}>
-          {/* Source Badge */}
-          <span className={cn(badgeStyles.base, getSourceColor(article.source))}>
-            {article.source}
-          </span>
+      <CardHeader className={cn(articlePaddingVariants({ size }), size === 'compact' ? 'pb-2' : 'pb-3')}>
+        <div className={cn(flexPatterns.between, size === 'compact' ? 'mb-1.5' : 'mb-2', gap.sm)}>
+          {/* ENHANCED: Source Badge with stats tooltip */}
+          <EnhancedSourceBadge source={article.source} />
 
           {/* Category & Sentiment */}
           <div className={cn(flexPatterns.start, gap.xs)}>
@@ -185,62 +266,80 @@ export function ArticleCard({
                 {article.category}
               </span>
             )}
-            {showAI && ai?.sentiment && (
-              <SentimentBadge sentiment={ai.sentiment} showScore={false} />
+            {showAI && ai?.ai_sentiment && (
+              <SentimentBadge sentiment={ai.ai_sentiment} showScore={false} />
+            )}
+            {/* NEW: Trending indicator in header */}
+            {size !== 'compact' && (
+              <TrendingIndicator keywords={article.keywords} />
             )}
           </div>
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-semibold leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className={articleTitleVariants({ size })}>
           {article.title}
         </h3>
       </CardHeader>
 
       {/* Content */}
-      <CardContent className="pb-3">
+      <CardContent className={cn(articlePaddingVariants({ size }), size === 'compact' ? 'pb-2' : 'pb-3')}>
         {/* Summary */}
-        <p className={cn(bodyText.small, 'text-muted-foreground line-clamp-3')}>
-          {showAI && ai?.summary ? ai.summary : article.summary}
+        <p className={articleSummaryVariants({ size })}>
+          {showAI && ai?.ai_summary ? ai.ai_summary : article.summary}
         </p>
 
-        {/* Stock Tickers */}
-        {hasTickers && (
-          <div className="mt-3 pt-3 border-t">
-            <ArticleStockTickers tickers={tickers} />
+        {/* ENHANCED: Stock Tickers with batch quotes */}
+        {hasTickers && size !== 'compact' && (
+          <div className={cn(size === 'large' ? 'mt-4 pt-4' : 'mt-3 pt-3', 'border-t')}>
+            {showEnhancedStocks && size === 'large' ? (
+              <ArticleStockTickersEnhanced
+                tickers={tickers}
+                showCharts={true}
+                showMetrics={aiExpanded}
+                variant="enhanced"
+              />
+            ) : (
+              <ArticleStockTickers tickers={tickers} />
+            )}
+            {/* NEW: Show related articles for first ticker */}
+            {tickerSymbols.length > 0 && size === 'large' && !showEnhancedStocks && (
+              <div className="mt-2">
+                <CompactRelatedArticles
+                  entityName={tickerSymbols[0]}
+                  entityType="ticker"
+                />
+              </div>
+            )}
           </div>
         )}
 
         {/* AI Categories */}
-        {showAI && ai?.categories && Object.keys(ai.categories).length > 0 && (
-          <div className={cn('flex flex-wrap', gap.xs, 'mt-3')}>
-            {Object.entries(ai.categories)
-              .sort(([, a], [, b]) => b - a)
-              .slice(0, 2)
-              .map(([category, confidence]) => (
-                <span
-                  key={category}
-                  className={cn(
-                    'inline-flex items-center gap-1 rounded-full',
-                    'bg-primary/10 px-2 py-0.5',
-                    bodyText.xs,
-                    'font-semibold text-primary',
-                    transitions.colors,
-                    'hover:bg-primary/20'
-                  )}
-                  title={`Confidence: ${(confidence * 100).toFixed(0)}%`}
-                >
-                  {category}
-                </span>
-              ))}
+        {showAI && ai?.ai_category && size !== 'compact' && (
+          <div className={cn('flex flex-wrap', gap.xs, size === 'large' ? 'mt-4' : 'mt-3')}>
+            {[ai.ai_category].map((category) => (
+              <span
+                key={category}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-full',
+                  'bg-primary/10 px-2 py-0.5',
+                  bodyText.xs,
+                  'font-semibold text-primary',
+                  transitions.colors,
+                  'hover:bg-primary/20'
+                )}
+              >
+                {category}
+              </span>
+            ))}
           </div>
         )}
 
         {/* Keywords Section */}
-        <KeywordsSection article={article} ai={ai} showAI={showAI} />
+        {size !== 'compact' && <KeywordsSection article={article} ai={ai} showAI={showAI} />}
 
         {/* AI Insights Toggle */}
-        {showAI && (
+        {showAI && size !== 'compact' && (
           <AIInsightsSection
             aiExpanded={aiExpanded}
             setAiExpanded={setAiExpanded}
@@ -249,17 +348,38 @@ export function ArticleCard({
             onEntityClick={onEntityClick}
           />
         )}
+
+        {/* NEW: Related articles for first entity */}
+        {size === 'large' && ai?.ai_entities && ai.ai_entities.length > 0 && (
+          <div className="mt-3">
+            <CompactRelatedArticles
+              entityName={ai.ai_entities[0].entity}
+              entityType="entity"
+            />
+          </div>
+        )}
       </CardContent>
 
       {/* Footer */}
-      <CardFooter className={cn(flexPatterns.between, 'pt-3 border-t', gap.md)}>
+      <CardFooter className={cn(
+        articlePaddingVariants({ size }),
+        flexPatterns.between,
+        size === 'compact' ? 'pt-2' : 'pt-3',
+        'border-t',
+        gap.md
+      )}>
         {/* Meta Information */}
-        <div className={cn(flexPatterns.start, gap.md, bodyText.xs, 'text-muted-foreground')}>
+        <div className={cn(
+          flexPatterns.start,
+          size === 'compact' ? gap.xs : gap.md,
+          size === 'compact' ? 'text-[10px]' : bodyText.xs,
+          'text-muted-foreground'
+        )}>
           <div className={cn(flexPatterns.start, gap.xs)}>
             <Calendar className="h-3 w-3" />
             <span>{formatRelativeTime(article.published)}</span>
           </div>
-          {article.author && (
+          {article.author && size !== 'compact' && (
             <div className={cn(flexPatterns.start, gap.xs)}>
               <User className="h-3 w-3" />
               <span className="hidden sm:inline">{truncateText(article.author, 20)}</span>
@@ -320,7 +440,7 @@ function KeywordsSection({ article, ai, showAI }: KeywordsSectionProps) {
   if (showAI && ai?.keywords && ai.keywords.length > 0) {
     return (
       <div className={cn('flex flex-wrap', gap.xs, 'mt-3')}>
-        {ai.keywords.slice(0, 5).map((kw: any) => (
+        {ai.keywords.slice(0, 4).map((kw: any) => (
           <KeywordTag key={kw.word} keyword={kw.word} score={kw.score} />
         ))}
       </div>
@@ -330,7 +450,7 @@ function KeywordsSection({ article, ai, showAI }: KeywordsSectionProps) {
   if (article.keywords && article.keywords.length > 0) {
     return (
       <div className={cn('flex flex-wrap', gap.xs, 'mt-3')}>
-        {article.keywords.slice(0, 4).map((keyword, index) => (
+        {article.keywords.slice(0, 3).map((keyword, index) => (
           <span
             key={index}
             className={cn(
@@ -345,7 +465,7 @@ function KeywordsSection({ article, ai, showAI }: KeywordsSectionProps) {
             {keyword}
           </span>
         ))}
-        {article.keywords.length > 4 && (
+        {article.keywords.length > 3 && (
           <span
             className={cn(
               'inline-flex items-center rounded-md',
@@ -354,7 +474,7 @@ function KeywordsSection({ article, ai, showAI }: KeywordsSectionProps) {
               'font-medium text-secondary-foreground'
             )}
           >
-            +{article.keywords.length - 4}
+            +{article.keywords.length - 3}
           </span>
         )}
       </div>
@@ -431,7 +551,12 @@ function EntitiesDisplay({ entities, onEntityClick }: EntitiesDisplayProps) {
     <>
       {entities.persons && entities.persons.length > 0 && (
         <div>
-          <h4 className={cn(bodyText.xs, 'font-semibold mb-1.5')}>People</h4>
+          <div className={cn(flexPatterns.between, 'mb-1.5')}>
+            <h4 className={cn(bodyText.xs, 'font-semibold')}>People</h4>
+            {entities.persons[0] && (
+              <CompactSentimentTimeline entityName={entities.persons[0]} days={7} />
+            )}
+          </div>
           <div className={cn('flex flex-wrap', gap.xs)}>
             {entities.persons.slice(0, 3).map((person) => (
               <EntityChip
@@ -535,4 +660,12 @@ function ScrapingControls({ article, setModalOpen }: ScrapingControlsProps) {
 // ============================================================================
 
 export type { ArticleCardProps };
-export { articleImageVariants, contentBadgeVariants, entitySectionVariants };
+export {
+  articleCardVariants,
+  articleImageVariants,
+  articleTitleVariants,
+  articleSummaryVariants,
+  articlePaddingVariants,
+  contentBadgeVariants,
+  entitySectionVariants
+};

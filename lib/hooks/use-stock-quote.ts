@@ -1,45 +1,47 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { StockQuote } from '@/lib/types/api';
 import { advancedApiClient } from '@/lib/api/advanced-client';
 
-interface UseStockQuoteResult {
-    quote: StockQuote | null;
-    loading: boolean;
-    error: Error | null;
-    refetch: () => void;
+interface UseStockQuoteOptions {
+    enabled?: boolean;
+    staleTime?: number;
+    refetchInterval?: number;
 }
 
-export function useStockQuote(symbol: string | null): UseStockQuoteResult {
-    const [quote, setQuote] = useState<StockQuote | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<Error | null>(null);
-
-    const fetchQuote = async () => {
-        if (!symbol) {
-            setQuote(null);
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = await advancedApiClient.getStockQuote(symbol);
-            if (response.success && response.data) {
-                setQuote(response.data);
-            } else {
-                throw new Error(response.error?.message || 'Failed to fetch quote');
+export function useStockQuote(
+    symbol: string | null,
+    options?: UseStockQuoteOptions
+) {
+    return useQuery({
+        queryKey: ['stock', 'quote', symbol],
+        queryFn: async () => {
+            if (!symbol) {
+                throw new Error('Symbol is required');
             }
-        } catch (err) {
-            setError(err instanceof Error ? err : new Error('Unknown error'));
-        } finally {
-            setLoading(false);
-        }
-    };
+            return await advancedApiClient.getStockQuote(symbol);
+        },
+        enabled: !!symbol && (options?.enabled !== false),
+        staleTime: options?.staleTime ?? 60 * 1000, // 1 minute default
+        refetchInterval: options?.refetchInterval,
+        retry: 2,
+    });
+}
 
-    useEffect(() => {
-        fetchQuote();
-    }, [symbol]);
-
-    return { quote, loading, error, refetch: fetchQuote };
+export function useMultipleStockQuotes(
+    symbols: string[],
+    options?: UseStockQuoteOptions
+) {
+    return useQuery({
+        queryKey: ['stock', 'quotes', symbols],
+        queryFn: async () => {
+            if (!symbols || symbols.length === 0) {
+                throw new Error('Symbols are required');
+            }
+            return await advancedApiClient.getMultipleQuotes(symbols);
+        },
+        enabled: symbols.length > 0 && (options?.enabled !== false),
+        staleTime: options?.staleTime ?? 60 * 1000,
+        refetchInterval: options?.refetchInterval,
+        retry: 2,
+    });
 }

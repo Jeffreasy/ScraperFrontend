@@ -1,48 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { StockNewsResponse } from '@/lib/types/api';
 import { apiClient } from '@/lib/api/client';
 
-interface UseStockNewsResult {
-    news: StockNewsResponse | null;
-    loading: boolean;
-    error: Error | null;
-    refetch: () => void;
+interface UseStockNewsOptions {
+    enabled?: boolean;
+    staleTime?: number;
 }
 
 export function useStockNews(
     symbol: string | null,
-    limit: number = 10
-): UseStockNewsResult {
-    const [news, setNews] = useState<StockNewsResponse | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<Error | null>(null);
-
-    const fetchNews = async () => {
-        if (!symbol) {
-            setNews(null);
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = await apiClient.getStockNews(symbol, limit);
-            if (response.success && response.data) {
-                setNews(response.data);
-            } else {
-                throw new Error(response.error?.message || 'Failed to fetch news');
+    limit: number = 10,
+    options?: UseStockNewsOptions
+) {
+    return useQuery({
+        queryKey: ['stock', 'news', symbol, limit],
+        queryFn: async () => {
+            if (!symbol) {
+                throw new Error('Symbol is required');
             }
-        } catch (err) {
-            setError(err instanceof Error ? err : new Error('Unknown error'));
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchNews();
-    }, [symbol, limit]);
-
-    return { news, loading, error, refetch: fetchNews };
+            return await apiClient.getStockNews(symbol, limit);
+        },
+        enabled: !!symbol && (options?.enabled !== false),
+        staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes default
+        retry: 2,
+    });
 }

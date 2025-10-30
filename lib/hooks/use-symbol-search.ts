@@ -1,41 +1,28 @@
-import { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { SymbolSearchResponse } from '@/lib/types/api';
 import { apiClient } from '@/lib/api/client';
 
-interface UseSymbolSearchResult {
-    results: SymbolSearchResponse | null;
-    loading: boolean;
-    error: Error | null;
-    search: (query: string, limit?: number) => Promise<void>;
+interface UseSymbolSearchOptions {
+    enabled?: boolean;
+    minQueryLength?: number;
 }
 
-export function useSymbolSearch(): UseSymbolSearchResult {
-    const [results, setResults] = useState<SymbolSearchResponse | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<Error | null>(null);
+export function useSymbolSearch(
+    query: string,
+    options?: UseSymbolSearchOptions
+) {
+    const minLength = options?.minQueryLength ?? 2;
 
-    const search = useCallback(async (query: string, limit: number = 10) => {
-        if (!query || query.length < 2) {
-            setResults(null);
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = await apiClient.searchSymbols(query, limit);
-            if (response.success && response.data) {
-                setResults(response.data);
-            } else {
-                throw new Error(response.error?.message || 'Failed to search symbols');
+    return useQuery({
+        queryKey: ['symbol', 'search', query],
+        queryFn: async () => {
+            if (!query || query.length < minLength) {
+                return { query, total: 0, results: [] };
             }
-        } catch (err) {
-            setError(err instanceof Error ? err : new Error('Unknown error'));
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    return { results, loading, error, search };
+            return await apiClient.searchSymbols(query);
+        },
+        enabled: query.length >= minLength && (options?.enabled !== false),
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        retry: 1,
+    });
 }

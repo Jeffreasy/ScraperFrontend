@@ -122,12 +122,9 @@ export function AnalystRatings({ symbol, limit = 10 }: AnalystRatingsProps) {
                     apiClient.getPriceTarget(symbol),
                 ]);
 
-                if (ratingsData.success && ratingsData.data) {
-                    setRatings(ratingsData.data);
-                }
-                if (targetData.success && targetData.data) {
-                    setTarget(targetData.data);
-                }
+                // Direct responses now, no wrapper
+                setRatings(ratingsData);
+                setTarget(targetData);
             } catch (err) {
                 setError(err instanceof Error ? err : new Error('Failed to load analyst data'));
             } finally {

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { TrendingUp, Clock, Hash, Flame, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTrendingTopics } from '@/lib/hooks/use-article-ai';
+import { useTrendingKeywords } from '@/lib/hooks/use-analytics';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { LightweightErrorBoundary } from '@/components/error-boundary';
@@ -83,14 +83,14 @@ export function TrendingTopics({
     minArticles = 3,
     maxTopics = 10,
 }: TrendingTopicsProps = {}) {
-    const { data, isLoading, error } = useTrendingTopics(hours, minArticles);
+    const { data, isLoading, error } = useTrendingKeywords(hours, minArticles, maxTopics);
 
     if (error) return <ErrorState />;
     if (isLoading) return <LoadingState />;
-    if (!data || data.topics.length === 0) return <EmptyState />;
+    if (!data || !data.trending || data.trending.length === 0) return <EmptyState />;
 
-    const totalArticles = data.topics.reduce((sum, t) => sum + t.article_count, 0);
-    const topicsToShow = data.topics.slice(0, maxTopics);
+    const totalArticles = data.trending.reduce((sum, t) => sum + t.article_count, 0);
+    const topicsToShow = data.trending;
 
     return (
         <LightweightErrorBoundary componentName="Trending Topics">
@@ -111,7 +111,7 @@ export function TrendingTopics({
                     {topicsToShow.map((topic, index) => {
                         const isTop3 = index < 3;
                         const articlePercentage = ((topic.article_count / totalArticles) * 100).toFixed(1);
-                        const sentimentType = topic.average_sentiment > 0.2 ? 'positive' : topic.average_sentiment < -0.2 ? 'negative' : 'neutral';
+                        const sentimentType = topic.avg_sentiment > 0.2 ? 'positive' : topic.avg_sentiment < -0.2 ? 'negative' : 'neutral';
 
                         return (
                             <Link
@@ -130,8 +130,8 @@ export function TrendingTopics({
                                                 {isTop3 && <Flame className="h-3 w-3 text-orange-500 shrink-0" />}
                                             </h4>
                                             <div className={sentimentIndicatorVariants({ sentiment: sentimentType })}>
-                                                {topic.average_sentiment > 0 ? <ArrowUp className="h-3 w-3 inline" /> : topic.average_sentiment < 0 ? <ArrowDown className="h-3 w-3 inline" /> : <Minus className="h-3 w-3 inline" />}
-                                                {Math.abs(topic.average_sentiment).toFixed(2)}
+                                                {topic.avg_sentiment > 0 ? <ArrowUp className="h-3 w-3 inline" /> : topic.avg_sentiment < 0 ? <ArrowDown className="h-3 w-3 inline" /> : <Minus className="h-3 w-3 inline" />}
+                                                {Math.abs(topic.avg_sentiment).toFixed(2)}
                                             </div>
                                         </div>
 
@@ -163,19 +163,19 @@ export function TrendingTopics({
                         );
                     })}
 
-                    {data.topics.length > maxTopics && (
+                    {data.trending.length > maxTopics && (
                         <p className={cn(bodyText.xs, 'text-muted-foreground text-center pt-2')}>
-                            {data.topics.length - maxTopics} meer trending topics beschikbaar
+                            {data.trending.length - maxTopics} meer trending topics beschikbaar
                         </p>
                     )}
 
                     <div className={cn('pt-3 border-t', spacing.xs)}>
                         <p className={cn(bodyText.xs, 'text-muted-foreground', flexPatterns.start, gap.xs)}>
                             <TrendingUp className="h-3 w-3" />
-                            Gebaseerd op {totalArticles} artikelen in de laatste {data.hours_back} uur
+                            Gebaseerd op {totalArticles} artikelen in de laatste {data.meta.hours} uur
                         </p>
                         <p className={cn(bodyText.xs, 'text-muted-foreground')}>
-                            Minimaal {data.min_articles} artikelen per topic
+                            Minimaal {data.meta.min_articles} artikelen per topic
                         </p>
                     </div>
                 </CardContent>

@@ -98,7 +98,7 @@ export default function AIPage() {
                     </p>
                 </div>
                 <div className="lg:col-span-1">
-                    <EarningsCalendar daysAhead={14} limit={8} compact={true} />
+                    <EarningsCalendar daysAhead={14} limit={8} variant="compact" />
                 </div>
             </div>
 
@@ -199,7 +199,5 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
 // EXPORTS
 // ============================================================================
 
-export {
-    featureCardVariants,
-    sectionContainerVariants,
-};
+// Note: CVA variants are not exported from page components to avoid Next.js type conflicts
+// Use these variants only within this component file

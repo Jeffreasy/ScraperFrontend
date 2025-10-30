@@ -10,3 +10,7 @@ export { StockWidget } from './stock-widget';
 export { PortfolioTracker } from './portfolio-tracker';
 export { MarketOverview } from './market-overview';
 export { AnalystRatings } from './analyst-ratings';
+// Phase 2: Enhanced Features
+export { StockMiniChart, StockSparkline } from './stock-mini-chart';
+export { EnhancedStockCard } from './enhanced-stock-card';
+export { ArticleStockTickersEnhanced } from './article-stock-tickers-enhanced';

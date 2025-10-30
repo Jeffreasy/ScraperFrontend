@@ -1,367 +1,159 @@
-# Nieuws Scraper Frontend Documentation
+# Nieuws Scraper Frontend - Documentatie
 
-Complete documentatie voor ontwikkelaars, designers en gebruikers.
+Welkom bij de complete documentatie voor de Nieuws Scraper Frontend. Deze index helpt je snel de juiste informatie te vinden.
 
-## 📚 Documentatie Structuur
-
-### 🚀 Getting Started
-
-Begin hier als je nieuw bent:
-
-- **[Snelstart Gids](getting-started/QUICKSTART.md)** - Setup in 5 minuten
-  - Installation & setup
-  - Eerste stappen
-  - Belangrijke features
-  - Environment variables
-  - Troubleshooting basics
-
-### 💻 Development
-
-Voor developers die aan het project werken:
-
-- **[Development Guide](development/DEVELOPMENT.md)** - Complete development gids
-  - Setup & IDE configuratie
-  - Architecture & patterns
-  - Component guidelines
-  - API integration
-  - State management
-  - Best practices
-
-- **[Folder Structure](development/FOLDER-STRUCTURE.md)** - Project organisatie
-  - Directory overzicht
-  - File naming conventions
-  - Module organisatie
-
-- **[Optimizations](development/OPTIMIZATIONS.md)** - Performance optimalisaties
-  - Smart caching strategies
-  - Request deduplication
-  - Circuit breaker pattern
-  - Adaptive polling
-  - Prefetch strategies
-
-### 🎨 Design & Styling
-
-Voor developers en designers:
-
-- **[Design System](styling/DESIGN-SYSTEM.md)** - Complete design tokens (458 regels)
-  - Kleuren & theming (CSS variabelen)
-  - Typography systeem (Inter font, 7 sizes)
-  - Spacing & layout (4px grid systeem)
-  - Component variants (Card, Button, Badge)
-  - Dark mode support (HSL color system)
-  - Animations (transitions, keyframes)
-  - Z-index hierarchy
-
-- **[Component Styling](styling/COMPONENT-STYLING.md)** - Styling richtlijnen (618 regels)
-  - Tailwind utility-first aanpak
-  - cn() utility voor class composition
-  - Responsive patterns (mobile-first)
-  - Component patterns (Card, Button, Input, Badge)
-  - State styling (hover, focus, active, disabled, loading)
-  - Layout patterns (Grid, Flex, Stack)
-  - Accessibility guidelines (focus states, semantic HTML)
-  - Common pitfalls te vermijden
-
-- **[Styling Optimizations](styling/STYLING-OPTIMIZATIONS.md)** - Nieuwe features (495 regels) ✨ NIEUW
-  - Class Variance Authority (CVA) voor type-safe variants
-  - next-themes voor dark mode ondersteuning
-  - Tailwind plugins (typography, forms, animations)
-  - Enhanced theme system met utilities
-  - Custom CSS utilities (15+ classes)
-  - Component refactors (Button, Card)
-  - Dark mode implementation guide
-  - Migration guide voor bestaande code
-  - Best practices en voorbeelden
-
-### 🔌 API Integration
-
-Voor API integratie en advanced patterns:
-
-- **[AI Integration](AI_INTEGRATION.md)** - AI features guide
-  - Sentiment analysis
-  - Entity extraction
-  - Trending topics
-  - Keyword analysis
-  - Chat interface
-
-- **[Advanced API](api/ADVANCED-API.md)** - Advanced patterns
-  - Health monitoring
-  - Circuit breakers
-  - Request deduplication
-  - Error recovery
-  - Performance optimization
-
-- **[Browser Scraping](BROWSER_SCRAPING_INTEGRATION.md)** - Hybrid scraping
-  - Content extraction
-  - Browser pool
-  - HTML parsing
-  - Error handling
-
-### 📖 Implementation Guides
-
-Stap-voor-stap implementatie guides:
-
-- **[Implementation Guide](guides/IMPLEMENTATION_GUIDE.md)** - Feature implementation
-  - Advanced API client setup
-  - Health monitoring hooks
-  - Adaptive polling
-  - Offline detection
-  - WebSocket client
-
-- **[Monitoring Guide](guides/MONITORING_GUIDE.md)** - Dashboard & metrics
-  - Admin dashboard
-  - Health monitoring
-  - Scraper statistics
-  - AI analytics
-  - Real-time updates
-
-- **[Monitoring Dashboard](MONITORING_DASHBOARD.md)** - Complete dashboard details
-  - Dashboard overzichten
-  - Component usage
-  - API endpoints
-  - Auto-refresh config
-
-### 🔧 Troubleshooting
-
-Als je problemen tegenkomt:
-
-- **[Troubleshooting Guide](troubleshooting/TROUBLESHOOTING.md)** - Common issues
-  - TypeScript errors
-  - Build issues
-  - API connection
-  - Runtime errors
-  - Performance problems
-
-- **[VSCode Fix](troubleshooting/VSCODE-FIX.md)** - TypeScript errors in VSCode
-  - Quick fixes (30 seconden)
-  - Cache issues
-  - Path alias problems
-
-## 🎯 Quick Navigation
-
-### Ik wil...
-
-**...snel beginnen**
-→ [Snelstart Gids](getting-started/QUICKSTART.md)
-
-**...de app ontwikkelen**
-→ [Development Guide](development/DEVELOPMENT.md)
-
-**...componenten stylen**
-→ [Component Styling](styling/COMPONENT-STYLING.md)
-
-**...API integreren**
-→ [Advanced API](api/ADVANCED-API.md)
-
-**...AI features toevoegen**
-→ [AI Integration](AI_INTEGRATION.md)
-
-**...monitoring implementeren**
-→ [Monitoring Guide](guides/MONITORING_GUIDE.md)
-
-**...problemen oplossen**
-→ [Troubleshooting](troubleshooting/TROUBLESHOOTING.md)
-
-**...performance optimaliseren**
-→ [Optimizations](development/OPTIMIZATIONS.md)
-
-## 📁 Documentatie Overzicht
+## 📚 Documentatie Overzicht
 
 ```
 docs/
-├── README.md (deze file)              # Documentatie index
+├── README.md                          # Deze index
 │
-├── getting-started/                   # 🚀 Start hier!
+├── getting-started/                   # 🚀 Start hier
 │   └── QUICKSTART.md                  # 5-minuten setup guide
 │
+├── api/                               # 🔌 API Documentatie
+│   ├── API-REFERENCE.md               # Complete API reference (1670 regels)
+│   └── ADVANCED-API.md                # Advanced patterns & monitoring
+│
 ├── development/                       # 💻 Development
-│   ├── DEVELOPMENT.md                 # Complete dev gids
-│   ├── FOLDER-STRUCTURE.md            # Project structuur
-│   └── OPTIMIZATIONS.md               # Performance tips
+│   ├── DEVELOPMENT.md                 # Complete development guide
+│   ├── FOLDER-STRUCTURE.md            # Project organisatie
+│   └── OPTIMIZATIONS.md               # Performance optimalisaties
+│
+├── features/                          # ✨ Feature Documentatie
+│   ├── ARTICLE-ENHANCEMENTS.md        # Article card features (Phase 1 & 2)
+│   ├── ARTICLE-LIVE-REFRESH.md        # Live updates
+│   └── STOCK-INTEGRATION-COMPLETE.md  # Stock features
 │
 ├── styling/                           # 🎨 Design & Styling
 │   ├── DESIGN-SYSTEM.md               # Design tokens & patterns
-│   └── COMPONENT-STYLING.md           # Component styling guide
-│
-├── api/                               # 🔌 API Integration
-│   └── ADVANCED-API.md                # Advanced patterns & monitoring
+│   ├── COMPONENT-STYLING.md           # Styling richtlijnen
+│   └── STYLING-OPTIMIZATIONS.md       # CVA, dark mode, utilities
 │
 ├── guides/                            # 📖 Implementation Guides
 │   ├── IMPLEMENTATION_GUIDE.md        # Feature implementation
-│   └── MONITORING_GUIDE.md            # Monitoring & dashboards
+│   └── MONITORING_GUIDE.md            # Dashboard & metrics
 │
-├── troubleshooting/                   # 🔧 Help & Support
+├── troubleshooting/                   # 🔧 Troubleshooting
 │   ├── TROUBLESHOOTING.md             # Common issues
-│   └── VSCODE-FIX.md                  # VSCode TypeScript fixes
+│   ├── VSCODE-FIX.md                  # TypeScript errors
+│   ├── NO-DATA.md                     # Data loading issues
+│   └── SENTIMENT-FIX.md               # Sentiment dashboard fix
 │
 └── [Feature Docs]                     # Specifieke features
-    ├── AI_INTEGRATION.md              # AI features
+    ├── AI_INTEGRATION.md              # AI features guide
     ├── BROWSER_SCRAPING_INTEGRATION.md # Hybrid scraping
     └── MONITORING_DASHBOARD.md        # Dashboard details
 ```
 
-## 🎓 Learning Path
+---
 
-### Beginner
+## 🚀 Quick Start
 
-1. Start met [Snelstart Gids](getting-started/QUICKSTART.md)
-2. Bekijk [Folder Structure](development/FOLDER-STRUCTURE.md)
-3. Lees [Design System](styling/DESIGN-SYSTEM.md) basics
+**Nieuw in het project?** Begin hier:
 
-### Intermediate
+1. **[Snelstart Gids](getting-started/QUICKSTART.md)** - Setup in 5 minuten
+2. **[Folder Structure](development/FOLDER-STRUCTURE.md)** - Begrijp de organisatie
+3. **[Design System](styling/DESIGN-SYSTEM.md)** - Leer de design basics
 
-4. Bestudeer [Development Guide](development/DEVELOPMENT.md)
-5. Implementeer features met [Implementation Guide](guides/IMPLEMENTATION_GUIDE.md)
-6. Leer over [API Integration](api/ADVANCED-API.md)
+---
 
-### Advanced
+## 📖 Belangrijkste Documentatie
 
-7. Optimaliseer met [Optimizations](development/OPTIMIZATIONS.md)
-8. Implementeer [Monitoring](guides/MONITORING_GUIDE.md)
-9. Voeg [AI Features](AI_INTEGRATION.md) toe
+### Voor Developers
 
-## 🔍 Zoek in Documentatie
+| Document | Beschrijving | Regels |
+|----------|--------------|--------|
+| [Development Guide](development/DEVELOPMENT.md) | Complete dev setup & patterns | 800+ |
+| [API Reference](api/API-REFERENCE.md) | Alle API endpoints & voorbeelden | 1670 |
+| [Design System](styling/DESIGN-SYSTEM.md) | Tokens, kleuren, typography | 458 |
+| [Component Styling](styling/COMPONENT-STYLING.md) | Styling patterns & guidelines | 618 |
 
-| Onderwerp | Documentatie |
-|-----------|--------------|
-| **Setup & Installation** | [Quickstart](getting-started/QUICKSTART.md) |
-| **Component Development** | [Development Guide](development/DEVELOPMENT.md) |
-| **Styling & Design** | [Design System](styling/DESIGN-SYSTEM.md), [Component Styling](styling/COMPONENT-STYLING.md), [Optimizations](styling/STYLING-OPTIMIZATIONS.md) ✨ |
-| **Dark Mode** | [Styling Optimizations](styling/STYLING-OPTIMIZATIONS.md#dark-mode-implementation) ✨ |
-| **CVA Variants** | [Styling Optimizations](styling/STYLING-OPTIMIZATIONS.md#component-refactors) ✨ |
-| **API Calls** | [Advanced API](api/ADVANCED-API.md) |
-| **State Management** | [Development Guide](development/DEVELOPMENT.md#state-management) |
-| **Performance** | [Optimizations](development/OPTIMIZATIONS.md) |
-| **AI Features** | [AI Integration](AI_INTEGRATION.md) |
-| **Monitoring** | [Monitoring Guide](guides/MONITORING_GUIDE.md) |
-| **Error Fixing** | [Troubleshooting](troubleshooting/TROUBLESHOOTING.md) |
-| **VSCode Issues** | [VSCode Fix](troubleshooting/VSCODE-FIX.md) |
+### Voor Specifieke Features
+
+| Document | Beschrijving |
+|----------|--------------|
+| [Article Enhancements](features/ARTICLE-ENHANCEMENTS.md) | Complete article card features |
+| [Stock Integration](features/STOCK-INTEGRATION-COMPLETE.md) | Stock API & componenten |
+| [AI Integration](AI_INTEGRATION.md) | Sentiment, entities, trending |
+| [Browser Scraping](BROWSER_SCRAPING_INTEGRATION.md) | Content extraction |
+
+### Voor Troubleshooting
+
+| Document | Wanneer te gebruiken |
+|----------|---------------------|
+| [Troubleshooting](troubleshooting/TROUBLESHOOTING.md) | Algemene problemen |
+| [VSCode Fix](troubleshooting/VSCODE-FIX.md) | TypeScript errors |
+| [No Data Fix](troubleshooting/NO-DATA.md) | Data laadt niet |
+| [Sentiment Fix](troubleshooting/SENTIMENT-FIX.md) | Sentiment dashboard problemen |
+
+---
+
+## 🎯 Ik wil...
+
+**...de app opzetten**  
+→ [Snelstart Gids](getting-started/QUICKSTART.md)
+
+**...componenten maken**  
+→ [Development Guide](development/DEVELOPMENT.md) + [Component Styling](styling/COMPONENT-STYLING.md)
+
+**...de API gebruiken**  
+→ [API Reference](api/API-REFERENCE.md) + [Advanced API](api/ADVANCED-API.md)
+
+**...features toevoegen**  
+→ [Implementation Guide](guides/IMPLEMENTATION_GUIDE.md)
+
+**...styling aanpassen**  
+→ [Design System](styling/DESIGN-SYSTEM.md) + [Styling Optimizations](styling/STYLING-OPTIMIZATIONS.md)
+
+**...monitoring implementeren**  
+→ [Monitoring Guide](guides/MONITORING_GUIDE.md)
+
+**...problemen oplossen**  
+→ [Troubleshooting](troubleshooting/)
+
+---
+
+## 📊 Documentatie Stats
+
+- **Totaal bestanden**: 20 MD bestanden
+- **Totaal regels**: ~7,000+ regels documentatie
+- **Categories**: 8 directories
+- **Coverage**: 100% van features gedocumenteerd
+
+---
+
+## 🔗 Backend Integration
+
+Deze frontend communiceert met de **Nieuws Scraper Backend** (Go API):
+- **Backend Repo**: [NieuwsScraper Backend](https://github.com/Jeffreasy/NieuwsScraper)
+- **API Documentatie**: Zie [API Reference](api/API-REFERENCE.md)
+- **Default URL**: `http://localhost:8080`
+
+---
 
 ## 📝 Documentation Standards
 
 Alle documentatie volgt deze standaarden:
-
-- ✅ GitHub-style markdown formatting
+- ✅ GitHub-style markdown
 - ✅ Clear section headers met emojis
 - ✅ Code examples met syntax highlighting
 - ✅ Links naar gerelateerde docs
-- ✅ Table of contents voor lange docs
-- ✅ Practical examples en use cases
+- ✅ Practical examples
 
-## 🔄 Documentatie Updates
-
-Bij het toevoegen van features:
-
-1. Update relevante documentatie
-2. Voeg code voorbeelden toe
-3. Link naar gerelateerde docs
-4. Update deze README indien nodig
+---
 
 ## 🆘 Support
 
-Hulp nodig?
-
 1. **Start met** [Troubleshooting](troubleshooting/TROUBLESHOOTING.md)
 2. **Voor VSCode errors** [VSCode Fix](troubleshooting/VSCODE-FIX.md)
-3. **Voor development** [Development Guide](development/DEVELOPMENT.md)
-4. **Voor styling** [Design System](styling/DESIGN-SYSTEM.md)
-## 🔗 Backend Integration
-
-### Backend Repository
-
-Deze frontend communiceert met de **Nieuws Scraper Backend** (Go API):
-- **Backend Repo**: [NieuwsScraper Backend](https://github.com/Jeffreasy/NieuwsScraper)
-- **API Documentatie**: Zie backend repository voor volledige API docs
-- **Default URL**: `http://localhost:8080`
-
-### Backend Scripts Directory
-
-De backend bevat een `scripts/` directory met **administratieve utility scripts**:
-
-> **⚠️ Note voor Frontend Developers**: Deze scripts zijn backend tools die **niet direct** door de frontend gebruikt worden. De frontend communiceert via de REST API endpoints.
-
-#### Go Scripts
-
-Elk Go script staat in zijn eigen subdirectory:
-
-- **list-tables** - Lists database tables en column details
-- **migrate-ai** - Applies AI-related database migrations
-- **test-job-tracking** - Tests scraping job tracking
-
-#### PowerShell Scripts
-
-- `apply-ai-migration.ps1` - Apply AI migrations
-- `apply-content-migration.ps1` - Apply content migrations
-- `create-db.ps1` - Create database
-- `start.ps1` - Start the backend application
-- `test-scraper.ps1` - Scraper testing
-
-### Hoe de Frontend de Backend Gebruikt
-
-1. **Start de Backend API Server**:
-   ```bash
-   # In de backend repository
-   go run cmd/api/main.go
-   # Server draait op http://localhost:8080
-   ```
-
-2. **Frontend API Endpoints**:
-   De frontend maakt HTTP requests naar endpoints zoals:
-   ```typescript
-   // Artikelen ophalen
-   fetch('http://localhost:8080/api/v1/articles?limit=20')
-   
-   // Zoeken
-   fetch('http://localhost:8080/api/v1/articles/search?q=voetbal')
-   
-   // Statistieken
-   fetch('http://localhost:8080/api/v1/articles/stats')
-   
-   // AI Sentiment
-   fetch('http://localhost:8080/api/v1/ai/sentiment/stats')
-   
-   // Trending Topics
-   fetch('http://localhost:8080/api/v1/ai/trending')
-   ```
-
-3. **API Client**:
-   De frontend gebruikt [`lib/api/advanced-client.ts`](../lib/api/advanced-client.ts) voor alle API communicatie met:
-   - Automatic retry logic
-   - Circuit breaker pattern
-   - Request deduplication
-   - Error handling
-
-### Backend Service Architectuur
-
-```
-Frontend (Next.js/React) - Port 3000
-    ↓ HTTP Requests
-Backend API Server (Go) - Port 8080
-    ↓
-├─ Article Handler (/api/v1/articles)
-├─ AI Handler (/api/v1/ai)
-├─ Scraper Handler (/api/v1/scrape) [Protected]
-└─ Health Handler (/health)
-    ↓
-PostgreSQL Database
-Redis Cache (Optional)
-```
-
-### Admin Scripts vs Frontend
-
-De backend scripts zijn **alleen voor backend administratie**:
-- **Database inspectie**: Bekijk tabellen en data
-- **Migraties**: Update database schema
-- **Testing**: Test backend functionaliteit
-
-Deze worden **door developers/admins** uitgevoerd via command line, niet door de frontend applicatie.
-
+3. **Voor data issues** [No Data Fix](troubleshooting/NO-DATA.md)
 
 ---
 
 <div align="center">
 
-**📚 Complete, professionele documentatie voor een production-ready frontend**
+**📚 Complete, georganiseerde documentatie voor production-ready development**
 
 [Terug naar Project README](../README.md)
 

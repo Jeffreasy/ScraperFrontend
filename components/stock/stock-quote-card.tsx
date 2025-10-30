@@ -21,11 +21,8 @@ export function StockQuoteCard({ symbol }: StockQuoteCardProps) {
                 setLoading(true);
                 setError(null);
                 const response = await advancedApiClient.getStockQuote(symbol);
-                if (response.success && response.data) {
-                    setQuote(response.data);
-                } else {
-                    setError(response.error?.message || 'Kan koers niet laden');
-                }
+                // Direct response now, no wrapper
+                setQuote(response);
             } catch (err) {
                 console.error('Failed to load quote:', err);
                 setError('Fout bij ophalen koers');
@@ -73,7 +70,7 @@ export function StockQuoteCard({ symbol }: StockQuoteCardProps) {
                 <div className="flex items-baseline justify-between">
                     <div>
                         <h3 className="text-lg font-bold">{quote.symbol}</h3>
-                        <p className="text-sm text-muted-foreground">{quote.name}</p>
+                        <p className="text-sm text-muted-foreground">{quote.name || quote.symbol}</p>
                     </div>
                     <div className="text-right">
                         <div className="text-2xl font-bold">

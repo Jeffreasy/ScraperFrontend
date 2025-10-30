@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSentimentStats } from '@/lib/hooks/use-article-ai';
+import { useSentimentAggregated } from '@/lib/hooks/use-sentiment-aggregated';
 import { Smile, Meh, Frown, TrendingUp, BarChart3, Award, AlertCircle } from 'lucide-react';
 import { LightweightErrorBoundary } from '@/components/error-boundary';
 import {
@@ -80,42 +80,42 @@ const sentimentConfig = {
 // ============================================================================
 
 export function SentimentDashboard({ source, startDate, endDate }: SentimentDashboardProps = {}) {
-    const { data: stats, isLoading, error } = useSentimentStats(source, startDate, endDate);
+    const { data: stats, isLoading, error } = useSentimentAggregated(source);
 
     const percentages = useMemo(() => {
-        if (!stats) return null;
-        const total = stats.total_articles;
+        if (!stats || !stats.by_sentiment) return null;
+        const total = stats.total_processed;
         if (total === 0) return null;
 
         return {
-            positive: ((stats.positive_count / total) * 100).toFixed(1),
-            neutral: ((stats.neutral_count / total) * 100).toFixed(1),
-            negative: ((stats.negative_count / total) * 100).toFixed(1),
+            positive: ((stats.by_sentiment.positive / total) * 100).toFixed(1),
+            neutral: ((stats.by_sentiment.neutral / total) * 100).toFixed(1),
+            negative: ((stats.by_sentiment.negative / total) * 100).toFixed(1),
         };
     }, [stats]);
 
     const activeSentiments = useMemo(() => {
-        if (!stats) return [];
+        if (!stats || !stats.by_sentiment) return [];
         return [
-            { type: 'positive' as const, count: stats.positive_count },
-            { type: 'neutral' as const, count: stats.neutral_count },
-            { type: 'negative' as const, count: stats.negative_count },
+            { type: 'positive' as const, count: stats.by_sentiment.positive },
+            { type: 'neutral' as const, count: stats.by_sentiment.neutral },
+            { type: 'negative' as const, count: stats.by_sentiment.negative },
         ].filter((s) => s.count > 0);
     }, [stats]);
 
     const dominantSentiment = useMemo(() => {
-        if (!stats) return null;
-        const max = Math.max(stats.positive_count, stats.neutral_count, stats.negative_count);
-        if (stats.positive_count === max) return 'positive';
-        if (stats.negative_count === max) return 'negative';
+        if (!stats || !stats.by_sentiment) return null;
+        const max = Math.max(stats.by_sentiment.positive, stats.by_sentiment.neutral, stats.by_sentiment.negative);
+        if (stats.by_sentiment.positive === max) return 'positive';
+        if (stats.by_sentiment.negative === max) return 'negative';
         return 'neutral';
     }, [stats]);
 
-    const hasLimitedData = stats && stats.total_articles < 10;
+    const hasLimitedData = stats && stats.total_processed < 10;
 
     if (error) return <ErrorState />;
     if (isLoading) return <LoadingState />;
-    if (!stats || stats.total_articles === 0) return <EmptyState />;
+    if (!stats || !stats.by_sentiment || stats.total_processed === 0) return <EmptyState />;
 
     return (
         <LightweightErrorBoundary componentName="Sentiment Dashboard">
@@ -135,7 +135,7 @@ export function SentimentDashboard({ source, startDate, endDate }: SentimentDash
                 </CardHeader>
                 <CardContent className={spacing.lg}>
                     {/* Limited Data Warning */}
-                    {hasLimitedData && <LimitedDataWarning count={stats.total_articles} />}
+                    {hasLimitedData && <LimitedDataWarning count={stats.total_processed} />}
 
                     {/* Distribution Cards */}
                     <SentimentDistribution
@@ -145,24 +145,16 @@ export function SentimentDashboard({ source, startDate, endDate }: SentimentDash
                     />
 
                     {/* Average Sentiment Meter */}
-                    <AverageSentimentMeter averageSentiment={stats.average_sentiment} />
-
-                    {/* Extreme Articles */}
-                    {(stats.most_positive_title || stats.most_negative_title) && (
-                        <ExtremeArticles
-                            mostPositive={stats.most_positive_title}
-                            mostNegative={stats.most_negative_title}
-                        />
-                    )}
+                    <AverageSentimentMeter averageSentiment={stats.avg_sentiment_score} />
 
                     {/* Summary Stats */}
                     {activeSentiments.length > 1 && (
-                        <SummaryStats totalArticles={stats.total_articles} averageSentiment={stats.average_sentiment} />
+                        <SummaryStats totalArticles={stats.total_processed} averageSentiment={stats.avg_sentiment_score} />
                     )}
 
                     {/* Footer Info */}
                     <FooterInfo
-                        totalArticles={stats.total_articles}
+                        totalArticles={stats.total_processed}
                         source={source}
                         startDate={startDate}
                         endDate={endDate}

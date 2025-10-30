@@ -371,4 +371,5 @@ function Footer() {
 // EXPORTS
 // ============================================================================
 
-export { premiumCardVariants };
+// Note: CVA variants are not exported from page components to avoid Next.js type conflicts
+// Use these variants only within this component file

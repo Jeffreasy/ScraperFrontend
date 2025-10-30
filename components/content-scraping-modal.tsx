@@ -40,6 +40,18 @@ import {
 // TYPES & INTERFACES
 // ============================================================================
 
+/**
+ * Content Scraping Modal Props
+ *
+ * This modal allows users to:
+ * 1. Extract full article content from the source URL
+ * 2. View the extracted content
+ * 3. Chat with AI about the article content
+ *
+ * API Endpoints Used:
+ * - POST /api/v1/articles/:id/extract-content - Extract full content
+ * - POST /api/v1/ai/chat - Chat with AI about article
+ */
 interface ContentScrapingModalProps {
     article: Article;
     open: boolean;
@@ -179,68 +191,120 @@ export function ContentScrapingModal({
     onOpenChange,
 }: ContentScrapingModalProps) {
     const queryClient = useQueryClient();
+
+    // Content extraction state
     const [state, setState] = useState<ScrapingState>(
         article.content_extracted && article.content ? 'success' : 'idle'
     );
     const [scrapedContent, setScrapedContent] = useState<string>(article.content || '');
     const [characterCount, setCharacterCount] = useState<number>(article.content?.length || 0);
+    const [error, setError] = useState<string>('');
+
+    // Extraction metadata (Note: Not currently provided by API)
     const [extractionMethod, setExtractionMethod] = useState<ExtractionMethod | undefined>();
     const [extractionTimeMs, setExtractionTimeMs] = useState<number | undefined>();
-    const [error, setError] = useState<string>('');
+
+    // UI state
     const [viewMode, setViewMode] = useState<ViewMode>('content');
+
+    // Chat state
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [isSendingChat, setIsSendingChat] = useState(false);
     const [chatError, setChatError] = useState<string>('');
     const chatEndRef = useRef<HTMLDivElement>(null);
 
+    /**
+     * Handle content extraction from article URL
+     *
+     * API Endpoint: POST /api/v1/articles/:id/extract-content
+     * Auth: Required (API Key)
+     *
+     * Response: { message: string; article: Article; }
+     *
+     * Note: The API response doesn't include extraction_method or extraction_time_ms.
+     * These could be added to the backend ContentExtractionResponse if needed.
+     */
     const handleScrape = async () => {
         setState('loading');
         setError('');
+        setExtractionMethod(undefined);
+        setExtractionTimeMs(undefined);
 
         try {
             const response = await apiClient.extractArticleContent(article.id);
 
-            if (response.success && response.data) {
-                setCharacterCount(response.data.characters);
-                setExtractionMethod(response.data.extraction_method);
-                setExtractionTimeMs(response.data.extraction_time_ms);
+            if (response.article?.content) {
+                setScrapedContent(response.article.content);
+                setCharacterCount(response.article.content.length);
+                setState('success');
 
-                const articleResponse = await apiClient.getArticle(article.id);
-
-                if (articleResponse.success && articleResponse.data?.content) {
-                    setScrapedContent(articleResponse.data.content);
-                    setState('success');
-
-                    queryClient.invalidateQueries({ queryKey: ['articles'] });
-                    queryClient.setQueryData(['article', article.id], articleResponse);
-                } else {
-                    throw new Error('Content niet beschikbaar');
-                }
+                // Update cache with new article data
+                queryClient.invalidateQueries({ queryKey: ['articles'] });
+                queryClient.setQueryData(['article', article.id], response.article);
             } else {
-                throw new Error(response.error?.message || 'Scraping mislukt');
+                throw new Error('Content niet beschikbaar');
             }
         } catch (err) {
             setState('error');
-            setError(err instanceof Error ? err.message : 'Er ging iets mis bij het scrapen');
-            console.error('Scraping error:', err);
+            const errorMessage = err instanceof Error ? err.message : 'Er ging iets mis bij het scrapen';
+            setError(errorMessage);
+            console.error('[ContentScrapingModal] Scraping error:', err);
         }
     };
 
+    /**
+     * Download extracted content as text file
+     * Creates a safe filename from article title
+     */
     const handleDownload = () => {
         if (!scrapedContent) return;
 
-        const blob = new Blob([scrapedContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${article.title.substring(0, 50)}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        try {
+            // Create safe filename (max 50 chars, remove special characters)
+            const safeTitle = article.title
+                .substring(0, 50)
+                .replace(/[^a-z0-9]/gi, '_')
+                .toLowerCase();
+
+            const filename = `article_${article.id}_${safeTitle}.txt`;
+
+            // Create and download file
+            const blob = new Blob([scrapedContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+
+            // Cleanup
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        } catch (err) {
+            console.error('[ContentScrapingModal] Download error:', err);
+            setError('Download mislukt');
+        }
     };
 
+    /**
+     * Handle AI chat message
+     *
+     * API Endpoint: POST /api/v1/ai/chat
+     * Auth: Optional
+     *
+     * Request Body:
+     * {
+     *   message: string;
+     *   context?: string;
+     *   article_id?: number;
+     *   article_content?: string;
+     * }
+     *
+     * Response: { response: string; conversation_id: string; tokens_used: number; }
+     */
     const handleSendChat = async () => {
         if (!chatInput.trim() || isSendingChat) return;
 
@@ -256,50 +320,62 @@ export function ContentScrapingModal({
         setChatError('');
 
         try {
+            // Use extracted content if available, otherwise fall back to summary
             const contentToUse = scrapedContent || article.content || article.summary;
-            const articleContentString = `Titel: ${article.title}
-Bron: ${article.source}
-URL: ${article.url}
-Gepubliceerd: ${article.published}
 
-VOLLEDIGE ARTIKEL TEKST:
-${contentToUse}`;
-
-            const response = await apiClient.sendChatMessage({
+            // Send chat request with article context
+            // Note: ChatRequest type may need updating to include article_id and article_content
+            const chatRequest: any = {
                 message: userMessage.content,
-                article_content: articleContentString,
                 article_id: article.id,
-            });
+                article_content: contentToUse,
+                context: 'article',
+            };
 
-            if (response.success && response.data) {
-                const assistantMessage: ChatMessage = {
-                    role: 'assistant',
-                    content: response.data.message,
-                    timestamp: new Date().toISOString(),
-                };
-                setChatMessages((prev) => [...prev, assistantMessage]);
-            } else {
-                throw new Error(response.error?.message || 'Chat mislukt');
-            }
+            const response = await apiClient.sendChatMessage(chatRequest);
+
+            const assistantMessage: ChatMessage = {
+                role: 'assistant',
+                content: response.response,
+                timestamp: new Date().toISOString(),
+            };
+
+            setChatMessages((prev) => [...prev, assistantMessage]);
         } catch (err) {
             setChatError(err instanceof Error ? err.message : 'Er ging iets mis met de chat');
-            console.error('Chat error:', err);
+            console.error('[ContentScrapingModal] Chat error:', err);
         } finally {
             setIsSendingChat(false);
         }
     };
 
+    /**
+     * Auto-scroll chat to bottom when new messages arrive
+     */
     useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (chatMessages.length > 0) {
+            chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
     }, [chatMessages]);
 
+    /**
+     * Reset modal state when closed (only if not successful)
+     * Preserves successful extractions when modal is closed
+     */
     const resetModal = () => {
+        // Don't reset if we successfully extracted content
+        if (state === 'success') return;
+
         setState('idle');
         setScrapedContent('');
         setCharacterCount(0);
         setExtractionMethod(undefined);
         setExtractionTimeMs(undefined);
         setError('');
+        setChatMessages([]);
+        setChatInput('');
+        setChatError('');
+        setViewMode('content');
     };
 
     return (
